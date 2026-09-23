@@ -10,7 +10,7 @@ object NetworkScanner {
 
     private const val TAG = "NetworkScanner"
 
-    suspend fun scan(context: Context) = withContext(Dispatchers.IO) {
+    suspend fun scan(context: Context): List<String> = withContext(Dispatchers.IO) {
         val wifiManager = context.applicationContext
             .getSystemService(Context.WIFI_SERVICE) as WifiManager
 
@@ -23,8 +23,6 @@ object NetworkScanner {
             ipInt shr 8 and 0xff,
             ipInt shr 16 and 0xff
         )
-
-        Log.d(TAG, "Subnet: $baseIp.0/24. Scan is starting...")
 
         val jobs = (1..254).map { lastOctet ->
             async {
@@ -41,8 +39,6 @@ object NetworkScanner {
             }
         }
 
-        val found = jobs.awaitAll().filterNotNull()
-        Log.d(TAG, "Scan is ready. Devices found: ${found.size}")
-        Log.d(TAG, "Device list: $found")
+        jobs.awaitAll().filterNotNull()
     }
 }
