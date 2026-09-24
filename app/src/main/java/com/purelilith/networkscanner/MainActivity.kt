@@ -26,6 +26,7 @@ import com.purelilith.networkscanner.ui.theme.NetworkScannerViewModel
 import kotlinx.coroutines.launch
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import com.purelilith.networkscanner.ui.theme.formatLastScanTime
 
 class MainActivity : ComponentActivity() {
@@ -43,24 +44,33 @@ class MainActivity : ComponentActivity() {
 
     @Preview(showBackground = true)
     @Composable
-    fun ScannerScreen(modifier: Modifier = Modifier, viewModel: NetworkScannerViewModel = viewModel()) {
+    fun ScannerScreen(
+        modifier: Modifier = Modifier,
+        viewModel: NetworkScannerViewModel = viewModel()
+    ) {
         val context = LocalContext.current
         val devices by viewModel.devices.collectAsState()
         val isScanning by viewModel.isScanning.collectAsState()
         val lastScanTime by viewModel.lastScanTime.collectAsState()
 
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text("Найдено ${devices.size} устройств")
-            Text(text = formatLastScanTime(lastScanTime))
-            Button(
-                onClick = {viewModel.startScan(context)},
-                enabled = !isScanning
-            ) {
-                Text(if (isScanning) "Сканирую..." else "Сканировать")
-            }
-            LazyColumn {
-                items(devices) { ip ->
-                    Text(text = ip, modifier = Modifier.padding(8.dp))
+        PullToRefreshBox(
+            modifier = Modifier.fillMaxSize(),
+            isRefreshing = isScanning,
+            onRefresh = { viewModel.startScan(context) }
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text("Найдено ${devices.size} устройств")
+                Text(text = formatLastScanTime(lastScanTime))
+                Button(
+                    onClick = { viewModel.startScan(context) },
+                    enabled = !isScanning
+                ) {
+                    Text(if (isScanning) "Сканирую..." else "Сканировать")
+                }
+                LazyColumn {
+                    items(devices) { ip ->
+                        Text(text = ip, modifier = Modifier.padding(8.dp))
+                    }
                 }
             }
         }
