@@ -10,8 +10,8 @@ import kotlinx.coroutines.launch
 
 class NetworkScannerViewModel: ViewModel() {
 
-    private val _devices = MutableStateFlow<List<String>>(emptyList())
-    val devices: StateFlow<List<String>> = _devices.asStateFlow()
+    private val _devices = MutableStateFlow<List<DeviceInfo>>(emptyList())
+    val devices: StateFlow<List<DeviceInfo>> = _devices.asStateFlow()
 
     private val _isScanning = MutableStateFlow<Boolean>(false)
     val isScanning: StateFlow<Boolean> = _isScanning.asStateFlow()

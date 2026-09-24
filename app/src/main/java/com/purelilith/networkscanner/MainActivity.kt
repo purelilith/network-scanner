@@ -68,8 +68,11 @@ class MainActivity : ComponentActivity() {
                     Text(if (isScanning) "Сканирую..." else "Сканировать")
                 }
                 LazyColumn {
-                    items(devices) { ip ->
-                        Text(text = ip, modifier = Modifier.padding(8.dp))
+                    items(devices) { device ->
+                        Column(modifier = Modifier.padding(8.dp)) {
+                            Text(text = device.ip)
+                            Text(text = device.guessedType)
+                        }
                     }
                 }
             }
