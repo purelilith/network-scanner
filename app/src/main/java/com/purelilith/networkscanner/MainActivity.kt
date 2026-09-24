@@ -26,6 +26,7 @@ import com.purelilith.networkscanner.ui.theme.NetworkScannerViewModel
 import kotlinx.coroutines.launch
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.foundation.lazy.items
+import com.purelilith.networkscanner.ui.theme.formatLastScanTime
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -46,9 +47,11 @@ class MainActivity : ComponentActivity() {
         val context = LocalContext.current
         val devices by viewModel.devices.collectAsState()
         val isScanning by viewModel.isScanning.collectAsState()
+        val lastScanTime by viewModel.lastScanTime.collectAsState()
 
         Column(modifier = Modifier.padding(16.dp)) {
             Text("Найдено ${devices.size} устройств")
+            Text(text = formatLastScanTime(lastScanTime))
             Button(
                 onClick = {viewModel.startScan(context)},
                 enabled = !isScanning
