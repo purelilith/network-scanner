@@ -16,6 +16,9 @@ object NetworkScanner {
 
         val dhcpInfo = wifiManager.dhcpInfo
         val ipInt = dhcpInfo.ipAddress
+        if (ipInt == 0) {
+            return@withContext emptyList()
+        }
 
         val baseIp = String.format(
             "%d.%d.%d",
