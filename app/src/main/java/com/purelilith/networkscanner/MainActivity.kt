@@ -48,6 +48,7 @@ class MainActivity : ComponentActivity() {
         val isScanning by viewModel.isScanning.collectAsState()
 
         Column(modifier = Modifier.padding(16.dp)) {
+            Text("Найдено ${devices.size} устройств")
             Button(
                 onClick = {viewModel.startScan(context)},
                 enabled = !isScanning
