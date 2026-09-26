@@ -24,9 +24,11 @@ object NetworkScanner {
     }
 
     private suspend fun checkDevicePortByIP(ip: String): DeviceInfo = coroutineScope {
+        val hostnameJob = async { getHostName(ip) }
         val portJobs = PORTS_TO_CHECK.map { port ->
             async { if (isPortOpen(ip, port)) port else null }
         }
+        val hostname = hostnameJob.await()
         val openPorts = portJobs.awaitAll().filterNotNull()
         val guessedType = when {
             9100 in openPorts -> "Возможно, принтер"
@@ -36,7 +38,7 @@ object NetworkScanner {
             else -> "Тип неизвестен"
         }
 
-        DeviceInfo(ip = ip, openPorts = openPorts, guessedType = guessedType)
+        DeviceInfo(ip = ip, openPorts = openPorts, guessedType = guessedType, hostname = hostname)
     }
 
     suspend fun scan(context: Context): List<DeviceInfo> = withContext(Dispatchers.IO) {
@@ -78,6 +80,15 @@ object NetworkScanner {
         deviceJobs.awaitAll()
 
 
+    }
+
+    suspend fun getHostName(ip: String): String? = withContext(Dispatchers.IO) {
+        try {
+            val hostname = InetAddress.getByName(ip).canonicalHostName
+            if (hostname == ip) null else hostname
+        } catch (e: Exception) {
+            null
+        }
     }
 }
 

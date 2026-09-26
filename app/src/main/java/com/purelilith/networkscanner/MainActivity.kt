@@ -70,7 +70,7 @@ class MainActivity : ComponentActivity() {
                 LazyColumn {
                     items(devices) { device ->
                         Column(modifier = Modifier.padding(8.dp)) {
-                            Text(text = device.ip)
+                            Text(text = device.hostname ?: device.ip)
                             Text(text = device.guessedType)
                         }
                     }
