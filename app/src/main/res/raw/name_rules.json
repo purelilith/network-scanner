@@ -1,0 +1,17 @@
+[
+  {"match": "iphone", "title": "iPhone"},
+  {"match": "ipad", "title": "iPad"},
+  {"match": "macbook|imac|mac-?mini", "title": "Mac"},
+  {"match": "^android", "title": "Android-устройство", "keepDetails": false},
+  {"match": "galaxy|^sm-", "title": "Samsung Galaxy"},
+  {"match": "pixel", "title": "Google Pixel"},
+  {"match": "redmi|poco|xiaomi|^mi-", "title": "Xiaomi"},
+  {"match": "^(desktop|laptop|win)-", "title": "Компьютер с Windows", "keepDetails": false},
+  {"match": "chromecast|google-?home|nest", "title": "Google (Chromecast / колонка)", "keepDetails": false},
+  {"match": "^(amazon|echo)", "title": "Amazon (Echo / Fire TV)", "keepDetails": false},
+  {"match": "^(esp|tasmota|shelly)", "title": "Умное устройство", "keepDetails": false},
+  {"match": "raspberry", "title": "Raspberry Pi", "keepDetails": false},
+  {"match": "bravia|webos|roku", "title": "Телевизор / приставка"},
+  {"match": "laserjet|officejet|deskjet|epson|canon|brother|^npi|^brn|printer", "title": "Принтер"},
+  {"match": "router|keenetic|mikrotik|^tl-|gateway", "title": "Роутер"}
+]
