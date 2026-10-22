@@ -1,8 +1,10 @@
-package com.purelilith.networkscanner.ui.theme
+package com.purelilith.networkscanner.ui
 
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.purelilith.networkscanner.data.scanner.DeviceInfo
+import com.purelilith.networkscanner.data.scanner.NetworkScanner
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

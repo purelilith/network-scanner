@@ -1,4 +1,4 @@
-package com.purelilith.networkscanner
+package com.purelilith.networkscanner.ui
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -21,10 +21,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.purelilith.networkscanner.ui.theme.FriendlyName
+import com.purelilith.networkscanner.data.scanner.FriendlyName
 import com.purelilith.networkscanner.ui.theme.NetworkScannerTheme
-import com.purelilith.networkscanner.ui.theme.NetworkScannerViewModel
-import com.purelilith.networkscanner.ui.theme.formatLastScanTime
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

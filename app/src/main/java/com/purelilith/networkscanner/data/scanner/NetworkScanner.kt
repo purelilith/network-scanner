@@ -1,4 +1,4 @@
-package com.purelilith.networkscanner.ui.theme
+package com.purelilith.networkscanner.data.scanner
 
 import android.content.Context
 import android.net.wifi.WifiManager
