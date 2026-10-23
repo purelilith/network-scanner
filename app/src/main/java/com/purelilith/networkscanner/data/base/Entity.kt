@@ -8,7 +8,7 @@ import androidx.room.PrimaryKey
 @Entity(tableName = "devices")
 data class DeviceEntity(
     @PrimaryKey val deviceKey: String,
-    val lastIP: String,
+    val lastIp: String?,
     val hostname: String?,
     val title: String,
     val nameSource: String,
@@ -18,7 +18,7 @@ data class DeviceEntity(
 
 @Entity(tableName = "scans")
 data class ScanEntity(
-    @PrimaryKey (autoGenerate = true) val id: Long?
+    @PrimaryKey (autoGenerate = true) val id: Long? = null,
     val startedAt: Long,
     val durationMs: Long,
     val deviceCount: Int,

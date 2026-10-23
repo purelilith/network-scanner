@@ -12,6 +12,8 @@ import androidx.room.RoomDatabase
 )
 
 abstract class AppDatabase : RoomDatabase() {
+
+    abstract fun scanDao(): ScanDao
     companion object {
         private var instance: AppDatabase? = null
 
