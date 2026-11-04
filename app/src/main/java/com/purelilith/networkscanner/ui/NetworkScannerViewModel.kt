@@ -32,6 +32,9 @@ class NetworkScannerViewModel(application: Application) : AndroidViewModel(appli
     val knownDevices: StateFlow<List<DeviceEntity>> = repository.observeDevices()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    val ignoredDevices: StateFlow<List<DeviceEntity>> = repository.observeIgnoredDevices()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
     val scanHistory: StateFlow<List<ScanEntity>> = repository.observeScans()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
@@ -42,9 +45,18 @@ class NetworkScannerViewModel(application: Application) : AndroidViewModel(appli
                 val startedAt = System.currentTimeMillis()
                 val found = NetworkScanner.scan(getApplication<Application>())
                 val finishedAt = System.currentTimeMillis()
-                _devices.value = found
-                if (found.isNotEmpty()) {
-                    repository.saveScan(found, startedAt, finishedAt)
+
+                val ignoredKeys = repository.getIgnoredKeys()
+
+                val cleanedFound = found.filter { device ->
+                    val key = repository.deviceKey(device)
+                    !ignoredKeys.contains(key) && !ignoredKeys.contains("ip:${device.ip}")
+                }
+
+                _devices.value = cleanedFound
+
+                if (cleanedFound.isNotEmpty()) {
+                    repository.saveScan(cleanedFound, startedAt, finishedAt)
                 }
                 _lastScanTime.value = finishedAt
             } finally {
@@ -56,6 +68,12 @@ class NetworkScannerViewModel(application: Application) : AndroidViewModel(appli
     fun updateCustomName(deviceKey: String, newName: String) {
         viewModelScope.launch {
             repository.updateCustomName(deviceKey, newName)
+        }
+    }
+
+    fun setDeviceIgnored(deviceKey: String, ignored: Boolean) {
+        viewModelScope.launch {
+            repository.setIgnoredStatus(deviceKey, ignored)
         }
     }
 

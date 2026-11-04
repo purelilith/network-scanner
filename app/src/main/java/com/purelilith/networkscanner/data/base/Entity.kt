@@ -1,6 +1,5 @@
 package com.purelilith.networkscanner.data.base
 
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
@@ -13,6 +12,7 @@ data class DeviceEntity(
     val title: String,
     val nameSource: String,
     val customName: String = "",
+    val isIgnored: Boolean = false,
     val firstSeen: Long,
     val lastSeen: Long
 )

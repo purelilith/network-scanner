@@ -2,15 +2,17 @@ package com.purelilith.networkscanner.data.base
 
 import androidx.room.withTransaction
 import com.purelilith.networkscanner.data.scanner.DeviceInfo
-
+import kotlinx.coroutines.flow.Flow
 
 class ScanRepository(private val db: AppDatabase) {
 
     private val dao = db.scanDao()
 
-    fun observeDevices() = dao.observeDevices()
+    fun observeDevices(): Flow<List<DeviceEntity>> = dao.observeDevices()
 
-    fun observeScans() = dao.observeScans()
+    fun observeIgnoredDevices(): Flow<List<DeviceEntity>> = dao.observeIgnoredDevices()
+
+    fun observeScans(): Flow<List<ScanEntity>> = dao.observeScans()
 
     internal fun deviceKey(device: DeviceInfo): String =
         device.hostname?.lowercase()?.let { "h:$it" } ?: "ip:${device.ip}"
@@ -21,9 +23,26 @@ class ScanRepository(private val db: AppDatabase) {
         }
     }
 
+    suspend fun setIgnoredStatus(deviceKey: String, ignored: Boolean) {
+        db.withTransaction {
+            dao.updateIgnoredStatus(deviceKey, ignored)
+        }
+    }
+
+    suspend fun getIgnoredKeys(): Set<String> {
+        return dao.getIgnoredDeviceKeys().toSet()
+    }
+
+
     suspend fun saveScan(devices: List<DeviceInfo>, startedAt: Long, finishedAt: Long) {
         db.withTransaction {
-            val byKey = devices.associateBy { deviceKey(it) }
+            val ignoredKeys = dao.getIgnoredDeviceKeys().toSet()
+
+            val activeDevices = devices.filter { device ->
+                ignoredKeys.contains(deviceKey(device)) == false
+            }
+
+            val byKey = activeDevices.associateBy { deviceKey(it) }
 
             val scanId = dao.insertScan(
                 ScanEntity(
@@ -44,13 +63,16 @@ class ScanRepository(private val db: AppDatabase) {
                     title = device.name.title,
                     nameSource = device.name.source.name,
                     customName = existing[key]?.customName ?: "",
+                    isIgnored = false,
                     firstSeen = existing[key]?.firstSeen ?: finishedAt,
                     lastSeen = finishedAt
                 )
             }
 
-            dao.upsertDevices(entities)
-            dao.insertSightings(entities.map { SightingEntity(scanId, it.deviceKey) })
+            if (entities.isNotEmpty()) {
+                dao.upsertDevices(entities)
+                dao.insertSightings(entities.map { SightingEntity(scanId, it.deviceKey) })
+            }
         }
     }
 }

@@ -22,11 +22,20 @@ interface ScanDao {
     @Query("UPDATE devices SET customName = :newName WHERE deviceKey = :deviceKey")
     suspend fun updateCustomName(deviceKey: String, newName: String)
 
+    @Query("UPDATE devices SET isIgnored = :ignored WHERE deviceKey = :deviceKey")
+    suspend fun updateIgnoredStatus(deviceKey: String, ignored: Boolean)
+
+    @Query("SELECT * FROM devices WHERE isIgnored = 0 ORDER BY lastSeen DESC")
+    fun observeDevices(): Flow<List<DeviceEntity>>
+
+    @Query("SELECT * FROM devices WHERE isIgnored = 1 ORDER BY lastSeen DESC")
+    fun observeIgnoredDevices(): Flow<List<DeviceEntity>>
+
+    @Query("SELECT deviceKey FROM devices WHERE isIgnored = 1")
+    suspend fun getIgnoredDeviceKeys(): List<String>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertSightings(sightings: List<SightingEntity>)
-
-    @Query("SELECT * FROM devices ORDER BY lastSeen DESC")
-    fun observeDevices(): Flow<List<DeviceEntity>>
 
     @Query("SELECT * FROM scans ORDER BY startedAt DESC")
     fun observeScans(): Flow<List<ScanEntity>>

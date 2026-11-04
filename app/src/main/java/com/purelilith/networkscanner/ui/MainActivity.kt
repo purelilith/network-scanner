@@ -12,9 +12,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Block
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -22,6 +27,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -35,6 +41,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.purelilith.networkscanner.data.base.DeviceEntity
 import com.purelilith.networkscanner.data.scanner.FriendlyName
 import com.purelilith.networkscanner.ui.theme.NetworkScannerTheme
 
@@ -84,13 +91,21 @@ fun ScannerScreen(
         knownDevices.associateBy { it.lastIp }
     }
 
+    val ignoredIps = remember(knownDevices) {
+        knownDevices.filter { it.isIgnored }.mapNotNull { it.lastIp }.toSet()
+    }
+
+    val filteredDevices = remember(devices, ignoredIps) {
+        devices.filter { device -> !ignoredIps.contains(device.ip) }
+    }
+
     PullToRefreshBox(
-        modifier = Modifier.fillMaxSize(),
+        modifier = modifier.fillMaxSize(),
         isRefreshing = isScanning,
         onRefresh = { viewModel.startScan() }
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text("Найдено ${devices.size} устройств")
+            Text("Найдено ${filteredDevices.size} устройств")
             Text(text = formatLastScanTime(lastScanTime))
             Button(
                 onClick = { viewModel.startScan() },
@@ -99,7 +114,7 @@ fun ScannerScreen(
                 Text(if (isScanning) "Сканирую..." else "Сканировать")
             }
             LazyColumn {
-                items(devices) { device ->
+                items(filteredDevices) { device ->
                     val matchedEntity = deviceMap[device.ip]
                     val displayName = matchedEntity?.customName?.takeIf { it.isNotBlank() }
                         ?: device.name.title
@@ -140,6 +155,9 @@ fun DevicesScreen(
 ) {
     val knownDevices by viewModel.knownDevices.collectAsState()
 
+    var deviceToIgnore by remember { mutableStateOf<DeviceEntity?>(null) }
+    var deviceToEdit by remember { mutableStateOf<DeviceEntity?>(null) }
+
     Box(modifier = modifier.fillMaxSize()) {
         if (knownDevices.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -155,10 +173,8 @@ fun DevicesScreen(
                     )
                 }
                 items(knownDevices) { device ->
-                    var showEditDialog by remember { mutableStateOf(false) }
-
                     DeviceCardContainer(
-                        onClick = { showEditDialog = true }
+                        onClick = { deviceToEdit = device }
                     ) {
                         Text(
                             text = device.customName.ifBlank { device.title },
@@ -166,17 +182,98 @@ fun DevicesScreen(
                         )
                         Text(text = "IP: ${device.lastIp}", style = MaterialTheme.typography.bodyMedium)
                         Text(text = "Ключ: ${device.deviceKey}", style = MaterialTheme.typography.bodySmall)
-                    }
 
-                    if (showEditDialog) {
-                        EditDeviceNameDialog(
-                            initialName = device.customName.ifBlank { device.title },
-                            onDismiss = { showEditDialog = false },
-                            onSave = { newName ->
-                                viewModel.updateCustomName(device.deviceKey, newName)
-                                showEditDialog = false
+                        Button(
+                            onClick = { deviceToIgnore = device },
+                            modifier = Modifier.padding(top = 8.dp)
+                        ) {
+                            Text("В черный список")
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    deviceToEdit?.let { device ->
+        EditDeviceNameDialog(
+            initialName = device.customName.ifBlank { device.title },
+            onDismiss = { deviceToEdit = null },
+            onSave = { newName ->
+                viewModel.updateCustomName(device.deviceKey, newName)
+                deviceToEdit = null
+            }
+        )
+    }
+
+    deviceToIgnore?.let { device ->
+        IgnoreDeviceDialog(
+            deviceName = device.customName.ifBlank { device.title },
+            onDismiss = { deviceToIgnore = null },
+            onConfirm = {
+                viewModel.setDeviceIgnored(device.deviceKey, true)
+                deviceToIgnore = null
+            }
+        )
+    }
+}
+
+@Composable
+fun IgnoreDeviceDialog(
+    deviceName: String,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Черный список") },
+        text = { Text("Добавить устройство «$deviceName» в черный список? Оно будет скрыто со всех экранов сканирования навсегда.") },
+        confirmButton = {
+            Button(onClick = onConfirm) {
+                Text("Игнорировать")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Отмена")
+            }
+        }
+    )
+}
+
+@Composable
+fun BlacklistScreen(
+    modifier: Modifier = Modifier,
+    viewModel: NetworkScannerViewModel = viewModel()
+) {
+    val ignoredDevices by viewModel.ignoredDevices.collectAsState()
+
+    Box(modifier = modifier.fillMaxSize()) {
+        if (ignoredDevices.isEmpty()) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text("Черный список пуст")
+            }
+        } else {
+            LazyColumn(modifier = Modifier.padding(16.dp)) {
+                item {
+                    Text(
+                        text = "Игнорируемые устройства",
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                }
+                items(ignoredDevices) { device ->
+                    Card(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+                        Column(modifier = Modifier.padding(12.dp)) {
+                            Text(text = device.customName.ifBlank { device.title }, style = MaterialTheme.typography.bodyLarge)
+                            Text(text = "IP: ${device.lastIp}", style = MaterialTheme.typography.bodyMedium)
+                            Button(
+                                onClick = { viewModel.setDeviceIgnored(device.deviceKey, false) },
+                                modifier = Modifier.padding(top = 8.dp)
+                            ) {
+                                Text("Разрешить сканирование")
                             }
-                        )
+                        }
                     }
                 }
             }
@@ -254,35 +351,49 @@ fun JournalScreen(
     }
 }
 
-enum class Tab(val title: String) {
-    SCANNER("Сканер"),
-    DEVICES("Устройства"),
-    JOURNAL("Журнал")
+sealed class Screen(val route: String, val title: String) {
+    data object Scanner : Screen("scanner", "Сканер")
+    data object Devices : Screen("devices", "Устройства")
+    data object Journal : Screen("journal", "Журнал")
+    data object Blacklist : Screen("blacklist", "Черный список")
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppRoot() {
-    var currentTab by remember { mutableStateOf(Tab.SCANNER) }
+    var currentScreen by remember { mutableStateOf<Screen>(Screen.Scanner) }
+    val viewModel: NetworkScannerViewModel = viewModel()
 
     Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(currentScreen.title) },
+                actions = {
+                    IconButton(onClick = { currentScreen = Screen.Blacklist }) {
+                        Icon(Icons.Default.Block, contentDescription = "Черный список")
+                    }
+                }
+            )
+        },
         bottomBar = {
             NavigationBar {
-                Tab.entries.forEach { tab ->
+                listOf(Screen.Scanner, Screen.Devices, Screen.Journal).forEach { screen ->
                     NavigationBarItem(
-                        selected = currentTab == tab,
-                        onClick = { currentTab = tab },
+                        selected = currentScreen == screen,
+                        onClick = { currentScreen = screen },
                         icon = {},
-                        label = { Text(tab.title) }
+                        label = { Text(screen.title) }
                     )
                 }
             }
         }
     ) { innerPadding ->
         val modifier = Modifier.padding(innerPadding)
-        when (currentTab) {
-            Tab.SCANNER -> ScannerScreen(modifier)
-            Tab.DEVICES -> DevicesScreen(modifier)
-            Tab.JOURNAL -> JournalScreen(modifier)
+        when (currentScreen) {
+            Screen.Scanner -> ScannerScreen(modifier, viewModel)
+            Screen.Devices -> DevicesScreen(modifier, viewModel)
+            Screen.Journal -> JournalScreen(modifier, viewModel)
+            Screen.Blacklist -> BlacklistScreen(modifier, viewModel)
         }
     }
 }
