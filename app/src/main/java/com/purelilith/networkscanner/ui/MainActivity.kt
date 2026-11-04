@@ -51,6 +51,23 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+@Composable
+fun DeviceCardContainer(
+    onClick: () -> Unit,
+    content: @Composable () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp)
+            .clickable { onClick() }
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            content()
+        }
+    }
+}
+
 @Preview(showBackground = true)
 @Composable
 fun ScannerScreen(
@@ -89,20 +106,15 @@ fun ScannerScreen(
 
                     var showEditDialog by remember { mutableStateOf(false) }
 
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 4.dp)
-                            .clickable {
-                                if (matchedEntity != null) showEditDialog = true
-                            }
-                    ) {
-                        Column(modifier = Modifier.padding(12.dp)) {
-                            Text(text = displayName)
-                            device.name.detail?.let { Text(text = it) }
-                            Text(text = "${device.ip} · ${device.name.source.label}")
-                            Text(text = "hostname: ${device.hostname ?: "—"}")
+                    DeviceCardContainer(
+                        onClick = {
+                            if (matchedEntity != null) showEditDialog = true
                         }
+                    ) {
+                        Text(text = displayName)
+                        device.name.detail?.let { Text(text = it) }
+                        Text(text = "${device.ip} · ${device.name.source.label}")
+                        Text(text = "hostname: ${device.hostname ?: "—"}")
                     }
 
                     if (showEditDialog && matchedEntity != null) {
@@ -145,20 +157,15 @@ fun DevicesScreen(
                 items(knownDevices) { device ->
                     var showEditDialog by remember { mutableStateOf(false) }
 
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 4.dp)
-                            .clickable { showEditDialog = true }
+                    DeviceCardContainer(
+                        onClick = { showEditDialog = true }
                     ) {
-                        Column(modifier = Modifier.padding(12.dp)) {
-                            Text(
-                                text = device.customName.ifBlank { device.title },
-                                style = MaterialTheme.typography.bodyLarge
-                            )
-                            Text(text = "IP: ${device.lastIp}", style = MaterialTheme.typography.bodyMedium)
-                            Text(text = "Ключ: ${device.deviceKey}", style = MaterialTheme.typography.bodySmall)
-                        }
+                        Text(
+                            text = device.customName.ifBlank { device.title },
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                        Text(text = "IP: ${device.lastIp}", style = MaterialTheme.typography.bodyMedium)
+                        Text(text = "Ключ: ${device.deviceKey}", style = MaterialTheme.typography.bodySmall)
                     }
 
                     if (showEditDialog) {
