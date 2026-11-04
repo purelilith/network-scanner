@@ -12,6 +12,7 @@ data class DeviceEntity(
     val hostname: String?,
     val title: String,
     val nameSource: String,
+    val customName: String = "",
     val firstSeen: Long,
     val lastSeen: Long
 )

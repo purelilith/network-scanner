@@ -12,8 +12,14 @@ class ScanRepository(private val db: AppDatabase) {
 
     fun observeScans() = dao.observeScans()
 
-    private fun deviceKey(device: DeviceInfo): String =
+    internal fun deviceKey(device: DeviceInfo): String =
         device.hostname?.lowercase()?.let { "h:$it" } ?: "ip:${device.ip}"
+
+    suspend fun updateCustomName(deviceKey: String, newName: String) {
+        db.withTransaction {
+            dao.updateCustomName(deviceKey, newName)
+        }
+    }
 
     suspend fun saveScan(devices: List<DeviceInfo>, startedAt: Long, finishedAt: Long) {
         db.withTransaction {
@@ -37,6 +43,7 @@ class ScanRepository(private val db: AppDatabase) {
                     hostname = device.hostname,
                     title = device.name.title,
                     nameSource = device.name.source.name,
+                    customName = existing[key]?.customName ?: "",
                     firstSeen = existing[key]?.firstSeen ?: finishedAt,
                     lastSeen = finishedAt
                 )

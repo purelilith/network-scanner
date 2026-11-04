@@ -52,6 +52,13 @@ class NetworkScannerViewModel(application: Application) : AndroidViewModel(appli
             }
         }
     }
+
+    fun updateCustomName(deviceKey: String, newName: String) {
+        viewModelScope.launch {
+            repository.updateCustomName(deviceKey, newName)
+        }
+    }
+
 }
 
 fun formatLastScanTime(lastTime: Long?): String {

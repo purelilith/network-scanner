@@ -19,6 +19,9 @@ interface ScanDao {
     @Upsert
     suspend fun upsertDevices(devices: List<DeviceEntity>)
 
+    @Query("UPDATE devices SET customName = :newName WHERE deviceKey = :deviceKey")
+    suspend fun updateCustomName(deviceKey: String, newName: String)
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertSightings(sightings: List<SightingEntity>)
 
