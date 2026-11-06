@@ -11,6 +11,8 @@ data class DeviceEntity(
     val hostname: String?,
     val title: String,
     val nameSource: String,
+    val deviceType: String = "UNKNOWN",
+    val typeIsGuess: Boolean = false,
     val customName: String = "",
     val isIgnored: Boolean = false,
     val firstSeen: Long,

@@ -2,6 +2,7 @@ package com.purelilith.networkscanner.data.base
 
 import androidx.room.withTransaction
 import com.purelilith.networkscanner.data.scanner.DeviceInfo
+import com.purelilith.networkscanner.data.scanner.DeviceType
 import kotlinx.coroutines.flow.Flow
 
 class ScanRepository(private val db: AppDatabase) {
@@ -68,15 +69,20 @@ class ScanRepository(private val db: AppDatabase) {
                 .associateBy { it.deviceKey }
 
             val entities = byKey.map { (key, device) ->
+                val old = existing[key]
+                val oldKnownType = old?.takeIf { device.type == DeviceType.UNKNOWN }
+
                 DeviceEntity(
                     deviceKey = key,
                     lastIp = device.ip,
                     hostname = device.hostname,
                     title = device.name.title,
                     nameSource = device.name.source.name,
-                    customName = existing[key]?.customName ?: "",
+                    deviceType = oldKnownType?.deviceType ?: device.type.name,
+                    typeIsGuess = oldKnownType?.typeIsGuess ?: device.typeIsGuess,
+                    customName = old?.customName ?: "",
                     isIgnored = false,
-                    firstSeen = existing[key]?.firstSeen ?: finishedAt,
+                    firstSeen = old?.firstSeen ?: finishedAt,
                     lastSeen = finishedAt
                 )
             }

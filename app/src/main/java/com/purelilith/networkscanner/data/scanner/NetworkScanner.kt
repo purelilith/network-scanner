@@ -52,13 +52,18 @@ object NetworkScanner {
             portGuess = portGuess
         )
 
+        val typeResult = FriendlyName.resolveType(hostname, services, openPorts)
+
         DeviceInfo(
             ip = ip,
             openPorts = openPorts,
             hostname = hostname,
             name = name,
+            type = typeResult.type,
+            typeIsGuess = typeResult.isGuess,
             mdnsServices = services
         )
+
     }
 
     suspend fun scan(context: Context): List<DeviceInfo> = withContext(Dispatchers.IO) {

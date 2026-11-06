@@ -12,11 +12,13 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.HelpOutline
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -26,7 +28,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
+import com.purelilith.networkscanner.data.scanner.DeviceType
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -163,6 +167,7 @@ fun DevicesScreen(
     var deviceToEdit by remember { mutableStateOf<DeviceEntity?>(null) }
     var deviceToDelete by remember { mutableStateOf<DeviceEntity?>(null) }
     var showDeleteAllDialog by remember { mutableStateOf(false) }
+    var deviceForHelpInfo by remember { mutableStateOf<DeviceEntity?>(null) }
 
     Box(modifier = modifier.fillMaxSize()) {
         if (knownDevices.isEmpty()) {
@@ -184,7 +189,6 @@ fun DevicesScreen(
                             style = MaterialTheme.typography.titleMedium
                         )
 
-                        // Кнопка-мусорка для удаления всех устройств
                         IconButton(
                             onClick = { showDeleteAllDialog = true },
                             enabled = knownDevices.isNotEmpty()
@@ -206,7 +210,37 @@ fun DevicesScreen(
                             style = MaterialTheme.typography.bodyLarge
                         )
                         Text(text = "IP: ${device.lastIp}", style = MaterialTheme.typography.bodyMedium)
+
+                        val deviceType = DeviceType.fromName(device.deviceType)
+                        val isGuess = device.typeIsGuess && deviceType != DeviceType.UNKNOWN
+
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 2.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Start
+                        ) {
+                            Text(
+                                text = "Тип: ${deviceType.label}",
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                            if (isGuess) {
+                                IconButton(
+                                    onClick = { deviceForHelpInfo = device },
+                                    modifier = Modifier.size(24.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.HelpOutline,
+                                        contentDescription = "Сомнение в типе устройства",
+                                        tint = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                            }
+                        }
+
                         Text(text = "Ключ: ${device.deviceKey}", style = MaterialTheme.typography.bodySmall)
+
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -215,16 +249,16 @@ fun DevicesScreen(
                         ) {
                             Button(
                                 onClick = { deviceToIgnore = device },
-                                modifier = Modifier.padding(top = 8.dp)
+                                modifier = Modifier.weight(1f)
                             ) {
                                 Text("В черный список")
                             }
 
-                            Button(
+                            OutlinedButton(
                                 onClick = { deviceToDelete = device },
-                                modifier = Modifier.padding(top = 8.dp)
+                                modifier = Modifier.weight(1f)
                             ) {
-                                Text("Удалить")
+                                Text("Удалить", color = MaterialTheme.colorScheme.error)
                             }
                         }
                     }
@@ -262,6 +296,21 @@ fun DevicesScreen(
             onConfirm = {
                 viewModel.setDeviceIgnored(device.deviceKey, true)
                 deviceToIgnore = null
+            }
+        )
+    }
+
+    deviceForHelpInfo?.let { device ->
+        AlertDialog(
+            onDismissRequest = { deviceForHelpInfo = null },
+            title = { Text("Неточное определение") },
+            text = {
+                Text("Тип этого устройства («${DeviceType.fromName(device.deviceType).label}») определён не на 100%, а на основе открытых портов или косвенных признаков.")
+            },
+            confirmButton = {
+                Button(onClick = { deviceForHelpInfo = null }) {
+                    Text("Понятно")
+                }
             }
         )
     }

@@ -5,5 +5,7 @@ data class DeviceInfo(
     val openPorts: List<Int>,
     val hostname: String?,
     val name: FriendlyDeviceName,
+    val type: DeviceType = DeviceType.UNKNOWN,
+    val typeIsGuess: Boolean = false,
     val mdnsServices: List<String> = emptyList()
 )

@@ -17,7 +17,13 @@ data class FriendlyDeviceName(val title: String, val detail: String?, val source
 
 object FriendlyName {
 
-    private class Rule(val pattern: Regex, val title: String, val keepDetails: Boolean)
+    private class Rule(
+        val pattern: Regex,
+        val title: String,
+        val keepDetails: Boolean,
+        val type: DeviceType?,
+        val typeIsGuess: Boolean
+    )
 
     private var rules: List<Rule> = emptyList()
 
@@ -30,7 +36,9 @@ object FriendlyName {
             Rule(
                 pattern = Regex(o.getString("match")),
                 title = o.getString("title"),
-                keepDetails = o.optBoolean("keepDetails", true)   // нет поля = true
+                keepDetails = o.optBoolean("keepDetails", true),
+                type = o.optString("type").takeIf { it.isNotBlank() }?.let { DeviceType.fromName(it) },
+                typeIsGuess = o.optBoolean("guess", false)
             )
         }
     }
@@ -60,6 +68,43 @@ object FriendlyName {
         if (portGuess != null) return FriendlyDeviceName(portGuess, null, NameSource.PORTS)
 
         return FriendlyDeviceName("Неизвестное устройство", null, NameSource.UNKNOWN)
+    }
+
+    private fun findRule(hostname: String): Rule? {
+        val lower = hostname.substringBefore('.').lowercase()
+        return rules.firstOrNull { it.pattern.containsMatchIn(lower) }
+    }
+
+    fun resolveType(hostname: String?, services: List<String>, openPorts: List<Int>): TypeResult {
+        val host = hostname?.takeIf { it.isNotBlank() }
+
+        host?.let { findRule(it) }?.let { rule ->
+            val ruleType = rule.type
+            if (ruleType != null && ruleType != DeviceType.UNKNOWN) {
+                return TypeResult(ruleType, rule.typeIsGuess)
+            }
+        }
+
+        deviceTypeFromServices(services)?.let { return it }
+
+        return deviceTypeFromPorts(openPorts) ?: TypeResult(DeviceType.UNKNOWN, false)
+    }
+
+    private fun deviceTypeFromServices(services: List<String>): TypeResult? = when {
+        services.any { it.startsWith("_googlecast") } -> TypeResult(DeviceType.SPEAKER, false)
+        services.any { it.startsWith("_ipp") || it.startsWith("_printer") } -> TypeResult(DeviceType.PRINTER, false)
+        services.any { it.startsWith("_hap") } -> TypeResult(DeviceType.SMART_HOME, false)
+        services.any { it.startsWith("_spotify-connect") } -> TypeResult(DeviceType.SPEAKER, true)
+        services.any { it.startsWith("_smb") } -> TypeResult(DeviceType.COMPUTER, true)
+        else -> null
+    }
+
+    private fun deviceTypeFromPorts(openPorts: List<Int>): TypeResult? = when {
+        9100 in openPorts -> TypeResult(DeviceType.PRINTER, true)
+        8009 in openPorts -> TypeResult(DeviceType.SPEAKER, true)
+        80 in openPorts || 8080 in openPorts -> TypeResult(DeviceType.ROUTER, true)
+        22 in openPorts -> TypeResult(DeviceType.SERVER, true)
+        else -> null
     }
 
     private fun tokensOf(hostname: String): List<String> =
