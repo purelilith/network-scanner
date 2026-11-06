@@ -39,6 +39,12 @@ class ScanRepository(private val db: AppDatabase) {
         }
     }
 
+    suspend fun deleteAllDevices() {
+        db.withTransaction {
+            dao.deleteAllDevices()
+        }
+    }
+
 
     suspend fun saveScan(devices: List<DeviceInfo>, startedAt: Long, finishedAt: Long) {
         db.withTransaction {

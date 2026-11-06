@@ -16,6 +16,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Block
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -161,6 +162,7 @@ fun DevicesScreen(
     var deviceToIgnore by remember { mutableStateOf<DeviceEntity?>(null) }
     var deviceToEdit by remember { mutableStateOf<DeviceEntity?>(null) }
     var deviceToDelete by remember { mutableStateOf<DeviceEntity?>(null) }
+    var showDeleteAllDialog by remember { mutableStateOf(false) }
 
     Box(modifier = modifier.fillMaxSize()) {
         if (knownDevices.isEmpty()) {
@@ -170,11 +172,30 @@ fun DevicesScreen(
         } else {
             LazyColumn(modifier = Modifier.padding(16.dp)) {
                 item {
-                    Text(
-                        text = "Всего сохранено: ${knownDevices.size}",
-                        style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 8.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Всего сохранено: ${knownDevices.size}",
+                            style = MaterialTheme.typography.titleMedium
+                        )
+
+                        // Кнопка-мусорка для удаления всех устройств
+                        IconButton(
+                            onClick = { showDeleteAllDialog = true },
+                            enabled = knownDevices.isNotEmpty()
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = "Удалить все",
+                                tint = MaterialTheme.colorScheme.error
+                            )
+                        }
+                    }
                 }
                 items(knownDevices) { device ->
                     DeviceCardContainer(
@@ -241,6 +262,30 @@ fun DevicesScreen(
             onConfirm = {
                 viewModel.setDeviceIgnored(device.deviceKey, true)
                 deviceToIgnore = null
+            }
+        )
+    }
+
+    if (showDeleteAllDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteAllDialog = false },
+            title = { Text("Очистить всю память?") },
+            text = { Text("Все сохраненные устройства будут удалены из базы данных. Они могут появиться снова при следующем сканировании.") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.deleteAllDevices()
+                        showDeleteAllDialog = false
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                ) {
+                    Text("Удалить все")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteAllDialog = false }) {
+                    Text("Отмена")
+                }
             }
         )
     }

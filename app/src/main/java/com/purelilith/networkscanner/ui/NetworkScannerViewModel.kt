@@ -83,6 +83,12 @@ class NetworkScannerViewModel(application: Application) : AndroidViewModel(appli
         }
     }
 
+    fun deleteAllDevices() {
+        viewModelScope.launch {
+            repository.deleteAllDevices()
+        }
+    }
+
 }
 
 fun formatLastScanTime(lastTime: Long?): String {
