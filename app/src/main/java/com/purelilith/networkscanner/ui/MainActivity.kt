@@ -5,8 +5,10 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -182,12 +184,25 @@ fun DevicesScreen(
                         )
                         Text(text = "IP: ${device.lastIp}", style = MaterialTheme.typography.bodyMedium)
                         Text(text = "Ключ: ${device.deviceKey}", style = MaterialTheme.typography.bodySmall)
-
-                        Button(
-                            onClick = { deviceToIgnore = device },
-                            modifier = Modifier.padding(top = 8.dp)
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 8.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Text("В черный список")
+                            Button(
+                                onClick = { deviceToIgnore = device },
+                                modifier = Modifier.padding(top = 8.dp)
+                            ) {
+                                Text("В черный список")
+                            }
+
+                            Button(
+                                onClick = { viewModel.deleteDevice(device.deviceKey) },
+                                modifier = Modifier.padding(top = 8.dp)
+                            ) {
+                                Text("Удалить")
+                            }
                         }
                     }
                 }
