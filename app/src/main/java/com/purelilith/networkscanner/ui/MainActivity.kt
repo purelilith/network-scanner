@@ -18,6 +18,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Block
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -159,6 +160,7 @@ fun DevicesScreen(
 
     var deviceToIgnore by remember { mutableStateOf<DeviceEntity?>(null) }
     var deviceToEdit by remember { mutableStateOf<DeviceEntity?>(null) }
+    var deviceToDelete by remember { mutableStateOf<DeviceEntity?>(null) }
 
     Box(modifier = modifier.fillMaxSize()) {
         if (knownDevices.isEmpty()) {
@@ -198,7 +200,7 @@ fun DevicesScreen(
                             }
 
                             Button(
-                                onClick = { viewModel.deleteDevice(device.deviceKey) },
+                                onClick = { deviceToDelete = device },
                                 modifier = Modifier.padding(top = 8.dp)
                             ) {
                                 Text("Удалить")
@@ -221,6 +223,17 @@ fun DevicesScreen(
         )
     }
 
+    deviceToDelete?.let { device ->
+        DeleteDeviceDialog(
+            deviceName = device.customName.ifBlank { device.title },
+            onDismiss = { deviceToDelete = null },
+            onConfirm = {
+                viewModel.deleteDevice(device.deviceKey)
+                deviceToDelete = null
+            }
+        )
+    }
+
     deviceToIgnore?.let { device ->
         IgnoreDeviceDialog(
             deviceName = device.customName.ifBlank { device.title },
@@ -231,6 +244,34 @@ fun DevicesScreen(
             }
         )
     }
+}
+
+@Composable
+fun DeleteDeviceDialog(
+    deviceName: String,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Удаление") },
+        text = {
+            Text("Устройство «$deviceName» будет удалено из памяти. Оно может снова появиться при следующем сканировании сети.")
+        },
+        confirmButton = {
+            Button(
+                onClick = onConfirm,
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+            ) {
+                Text("Удалить")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Отмена")
+            }
+        }
+    )
 }
 
 @Composable
