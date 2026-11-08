@@ -12,6 +12,10 @@ class ScanRepository(private val db: AppDatabase) {
 
     fun observeDevices(): Flow<List<DeviceEntity>> = dao.observeDevices()
 
+    fun getSeenTimes(key: String): Flow<List<Long>> {
+        return dao.observeSeenTimes(key)
+    }
+
     fun observeIgnoredDevices(): Flow<List<DeviceEntity>> = dao.observeIgnoredDevices()
 
     fun observeScans(): Flow<List<ScanEntity>> = dao.observeScans()

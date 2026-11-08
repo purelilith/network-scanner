@@ -15,6 +15,7 @@ import com.purelilith.networkscanner.data.base.ScanEntity
 import com.purelilith.networkscanner.data.base.ScanRepository
 import com.purelilith.networkscanner.data.scanner.DeviceInfo
 import com.purelilith.networkscanner.data.scanner.NetworkScanner
+import kotlinx.coroutines.flow.Flow
 
 class NetworkScannerViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -78,6 +79,10 @@ class NetworkScannerViewModel(application: Application) : AndroidViewModel(appli
         viewModelScope.launch {
             _selectedScanDevices.value = repository.getDevicesInScan(scanId)
         }
+    }
+
+    fun observeDeviceSeenTimes(deviceKey: String): Flow<List<Long>> {
+        return repository.getSeenTimes(deviceKey)
     }
 
     fun setDeviceIgnored(deviceKey: String, ignored: Boolean) {

@@ -47,6 +47,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.purelilith.networkscanner.data.base.DeviceEntity
@@ -171,6 +172,7 @@ fun DevicesScreen(
     var deviceToDelete by remember { mutableStateOf<DeviceEntity?>(null) }
     var showDeleteAllDialog by remember { mutableStateOf(false) }
     var deviceForHelpInfo by remember { mutableStateOf<DeviceEntity?>(null) }
+    var deviceToInspect by remember { mutableStateOf<DeviceEntity?>(null) }
 
     Box(modifier = modifier.fillMaxSize()) {
         if (knownDevices.isEmpty()) {
@@ -206,7 +208,7 @@ fun DevicesScreen(
                 }
                 items(knownDevices) { device ->
                     DeviceCardContainer(
-                        onClick = { deviceToEdit = device }
+                        onClick = { deviceToInspect = device }
                     ) {
                         Text(
                             text = device.customName.ifBlank { device.title },
@@ -268,6 +270,77 @@ fun DevicesScreen(
                 }
             }
         }
+    }
+    deviceToInspect?.let { device ->
+        val seenTimesFlow = remember(device.deviceKey) {
+            viewModel.observeDeviceSeenTimes(device.deviceKey)
+        }
+        val seenTimes by seenTimesFlow.collectAsState(initial = emptyList())
+
+        var customNameInput by remember(device) { mutableStateOf(device.customName) }
+
+        AlertDialog(
+            onDismissRequest = { deviceToInspect = null },
+            title = { Text(text = device.customName.ifBlank { device.title }) },
+            text = {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedTextField(
+                        value = customNameInput,
+                        onValueChange = { customNameInput = it },
+                        label = { Text("Свое имя устройства") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Button(
+                        onClick = {
+                            viewModel.updateCustomName(device.deviceKey, customNameInput)
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Сохранить имя")
+                    }
+
+                    Text(
+                        text = "История обнаружений:",
+                        style = MaterialTheme.typography.titleSmall,
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
+
+                    if (seenTimes.isEmpty()) {
+                        Text("Нет данных о сканированиях", style = MaterialTheme.typography.bodyMedium)
+                    } else {
+                        LazyColumn(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .size(height = 150.dp, width = Dp.Unspecified)
+                        ) {
+                            items(seenTimes) { timestamp ->
+                                val dateString = remember(timestamp) {
+                                    val formatter = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale("ru"))
+                                    formatter.format(Date(timestamp))
+                                }
+                                Text(
+                                    text = "• Обнаружено: $dateString",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    modifier = Modifier.padding(vertical = 2.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                Button(onClick = { deviceToInspect = null }) {
+                    Text("Закрыть")
+                }
+            }
+        )
     }
 
     deviceToEdit?.let { device ->
