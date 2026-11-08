@@ -23,7 +23,6 @@ data class DeviceEntity(
 data class ScanEntity(
     @PrimaryKey (autoGenerate = true) val id: Long? = null,
     val startedAt: Long,
-    val durationMs: Long,
     val deviceCount: Int,
 )
 

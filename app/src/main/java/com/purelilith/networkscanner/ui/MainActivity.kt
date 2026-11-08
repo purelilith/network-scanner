@@ -504,7 +504,6 @@ fun JournalScreen(
                                 style = MaterialTheme.typography.titleMedium
                             )
                             Text(text = "Найдено устройств: ${scan.deviceCount}")
-                            Text(text = "Длительность: ${scan.durationMs} мс")
                         }
                     }
                 }

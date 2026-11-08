@@ -60,7 +60,6 @@ class ScanRepository(private val db: AppDatabase) {
             val scanId = dao.insertScan(
                 ScanEntity(
                     startedAt = startedAt,
-                    durationMs = finishedAt - startedAt,
                     deviceCount = byKey.size
                 )
             )
