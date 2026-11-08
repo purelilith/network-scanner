@@ -52,6 +52,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.purelilith.networkscanner.data.base.DeviceEntity
 import com.purelilith.networkscanner.data.scanner.FriendlyName
 import com.purelilith.networkscanner.ui.theme.NetworkScannerTheme
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -490,7 +493,16 @@ fun JournalScreen(
                         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
                     ) {
                         Column(modifier = Modifier.padding(12.dp)) {
-                            Text(text = "Сканирование #${scan.id}")
+                            // formatted date "13.08.2026 10:30"
+                            val formattedDate = remember(scan.startedAt) {
+                                val formatter = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale("ru"))
+                                formatter.format(Date(scan.startedAt))
+                            }
+
+                            Text(
+                                text = formattedDate,
+                                style = MaterialTheme.typography.titleMedium
+                            )
                             Text(text = "Найдено устройств: ${scan.deviceCount}")
                             Text(text = "Длительность: ${scan.durationMs} мс")
                         }
