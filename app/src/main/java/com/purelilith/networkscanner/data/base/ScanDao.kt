@@ -28,6 +28,9 @@ interface ScanDao {
     @Query("DELETE FROM devices")
     suspend fun deleteAllDevices()
 
+    @Query("UPDATE devices SET deviceType = :newType, typeIsGuess = 0 WHERE deviceKey = :deviceKey")
+    suspend fun updateDeviceType(deviceKey: String, newType: String)
+
     @Query("UPDATE devices SET isIgnored = :ignored WHERE deviceKey = :deviceKey")
     suspend fun updateIgnoredStatus(deviceKey: String, ignored: Boolean)
 

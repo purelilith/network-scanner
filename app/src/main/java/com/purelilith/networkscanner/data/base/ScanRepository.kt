@@ -9,11 +9,16 @@ class ScanRepository(private val db: AppDatabase) {
 
     private val dao = db.scanDao()
 
-
     fun observeDevices(): Flow<List<DeviceEntity>> = dao.observeDevices()
 
     fun getSeenTimes(key: String): Flow<List<Long>> {
         return dao.observeSeenTimes(key)
+    }
+
+    suspend fun updateDeviceType(deviceKey: String, newType: String) {
+        db.withTransaction {
+            dao.updateDeviceType(deviceKey, newType)
+        }
     }
 
     fun observeIgnoredDevices(): Flow<List<DeviceEntity>> = dao.observeIgnoredDevices()
@@ -55,7 +60,6 @@ class ScanRepository(private val db: AppDatabase) {
         }
     }
 
-
     suspend fun saveScan(devices: List<DeviceInfo>, startedAt: Long, finishedAt: Long) {
         db.withTransaction {
             val ignoredKeys = dao.getIgnoredDeviceKeys().toSet()
@@ -78,7 +82,18 @@ class ScanRepository(private val db: AppDatabase) {
 
             val entities = byKey.map { (key, device) ->
                 val old = existing[key]
-                val oldKnownType = old?.takeIf { device.type == DeviceType.UNKNOWN }
+
+                val finalType = if (old != null && !old.typeIsGuess) {
+                    old.deviceType
+                } else {
+                    device.type.name
+                }
+
+                val finalTypeIsGuess = if (old != null && !old.typeIsGuess) {
+                    false
+                } else {
+                    device.typeIsGuess
+                }
 
                 DeviceEntity(
                     deviceKey = key,
@@ -86,8 +101,8 @@ class ScanRepository(private val db: AppDatabase) {
                     hostname = device.hostname,
                     title = device.name.title,
                     nameSource = device.name.source.name,
-                    deviceType = oldKnownType?.deviceType ?: device.type.name,
-                    typeIsGuess = oldKnownType?.typeIsGuess ?: device.typeIsGuess,
+                    deviceType = finalType,
+                    typeIsGuess = finalTypeIsGuess,
                     customName = old?.customName ?: "",
                     isIgnored = false,
                     firstSeen = old?.firstSeen ?: finishedAt,

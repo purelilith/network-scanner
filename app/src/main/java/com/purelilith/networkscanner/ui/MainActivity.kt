@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -279,6 +280,9 @@ fun DevicesScreen(
 
         var customNameInput by remember(device) { mutableStateOf(device.customName) }
 
+        var selectedType by remember(device) { mutableStateOf(DeviceType.fromName(device.deviceType)) }
+        var expandedTypeDropdown by remember { mutableStateOf(false) }
+
         AlertDialog(
             onDismissRequest = { deviceToInspect = null },
             title = { Text(text = device.customName.ifBlank { device.title }) },
@@ -307,6 +311,37 @@ fun DevicesScreen(
                     }
 
                     Text(
+                        text = "Тип устройства:",
+                        style = MaterialTheme.typography.titleSmall,
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+
+                    Box(modifier = Modifier.fillMaxWidth()) {
+                        OutlinedButton(
+                            onClick = { expandedTypeDropdown = true },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(text = selectedType.label)
+                        }
+
+                        androidx.compose.material3.DropdownMenu(
+                            expanded = expandedTypeDropdown,
+                            onDismissRequest = { expandedTypeDropdown = false }
+                        ) {
+                            DeviceType.entries.forEach { type ->
+                                androidx.compose.material3.DropdownMenuItem(
+                                    text = { Text(type.label) },
+                                    onClick = {
+                                        selectedType = type
+                                        expandedTypeDropdown = false
+                                        viewModel.updateDeviceType(device.deviceKey, type.name)
+                                    }
+                                )
+                            }
+                        }
+                    }
+
+                    Text(
                         text = "История обнаружений:",
                         style = MaterialTheme.typography.titleSmall,
                         modifier = Modifier.padding(top = 8.dp)
@@ -318,7 +353,7 @@ fun DevicesScreen(
                         LazyColumn(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .size(height = 150.dp, width = Dp.Unspecified)
+                                .height(120.dp)
                         ) {
                             items(seenTimes) { timestamp ->
                                 val dateString = remember(timestamp) {
@@ -326,7 +361,7 @@ fun DevicesScreen(
                                     formatter.format(Date(timestamp))
                                 }
                                 Text(
-                                    text = "• Обнаружено: $dateString",
+                                    text = "• $dateString",
                                     style = MaterialTheme.typography.bodyMedium,
                                     modifier = Modifier.padding(vertical = 2.dp)
                                 )

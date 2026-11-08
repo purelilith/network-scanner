@@ -81,6 +81,12 @@ class NetworkScannerViewModel(application: Application) : AndroidViewModel(appli
         }
     }
 
+    fun updateDeviceType(deviceKey: String, newType: String) {
+        viewModelScope.launch {
+            repository.updateDeviceType(deviceKey, newType)
+        }
+    }
+
     fun observeDeviceSeenTimes(deviceKey: String): Flow<List<Long>> {
         return repository.getSeenTimes(deviceKey)
     }
