@@ -81,6 +81,18 @@ class NetworkScannerViewModel(application: Application) : AndroidViewModel(appli
         }
     }
 
+    fun deleteScan(scanId: Long) {
+        viewModelScope.launch {
+            repository.deleteScan(scanId)
+        }
+    }
+
+    fun deleteAllScans() {
+        viewModelScope.launch {
+            repository.deleteAllScans()
+        }
+    }
+
     fun updateDeviceType(deviceKey: String, newType: String) {
         viewModelScope.launch {
             repository.updateDeviceType(deviceKey, newType)

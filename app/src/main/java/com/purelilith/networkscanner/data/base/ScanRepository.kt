@@ -48,6 +48,20 @@ class ScanRepository(private val db: AppDatabase) {
         return dao.getIgnoredDeviceKeys().toSet()
     }
 
+    suspend fun deleteScan(scanId: Long) {
+        db.withTransaction {
+            dao.deleteSightingsForScan(scanId)
+            dao.deleteScan(scanId)
+        }
+    }
+
+    suspend fun deleteAllScans() {
+        db.withTransaction {
+            dao.deleteAllSightings()
+            dao.deleteAllScans()
+        }
+    }
+
     suspend fun deleteDevice(deviceKey: String) {
         db.withTransaction {
             dao.deleteDevice(deviceKey)

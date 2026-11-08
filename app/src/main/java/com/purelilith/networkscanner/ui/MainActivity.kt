@@ -1,6 +1,7 @@
 package com.purelilith.networkscanner.ui
 
 import android.os.Bundle
+import com.purelilith.networkscanner.data.base.ScanEntity
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -584,6 +585,8 @@ fun JournalScreen(
     val scanDevices by viewModel.selectedScanDevices.collectAsState()
 
     var selectedScanId by remember { mutableStateOf<Long?>(null) }
+    var scanToDelete by remember { mutableStateOf<ScanEntity?>(null) }
+    var showDeleteAllDialog by remember { mutableStateOf(false) }
 
     Box(modifier = modifier.fillMaxSize()) {
         if (history.isEmpty()) {
@@ -593,11 +596,29 @@ fun JournalScreen(
         } else {
             LazyColumn(modifier = Modifier.padding(16.dp)) {
                 item {
-                    Text(
-                        text = "История сканирований",
-                        style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 8.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "История сканирований (${history.size})",
+                            style = MaterialTheme.typography.titleMedium
+                        )
+
+                        IconButton(
+                            onClick = { showDeleteAllDialog = true },
+                            enabled = history.isNotEmpty()
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = "Очистить историю",
+                                tint = MaterialTheme.colorScheme.error
+                            )
+                        }
+                    }
                 }
                 items(history) { scan ->
                     val formattedDate = remember(scan.startedAt) {
@@ -616,12 +637,30 @@ fun JournalScreen(
                                 }
                             }
                     ) {
-                        Column(modifier = Modifier.padding(12.dp)) {
-                            Text(
-                                text = formattedDate,
-                                style = MaterialTheme.typography.titleMedium
-                            )
-                            Text(text = "Найдено устройств: ${scan.deviceCount}")
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(12.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = formattedDate,
+                                    style = MaterialTheme.typography.titleMedium
+                                )
+                                Text(text = "Найдено устройств: ${scan.deviceCount}")
+                            }
+
+                            IconButton(
+                                onClick = { scanToDelete = scan }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Delete,
+                                    contentDescription = "Удалить сканирование",
+                                    tint = MaterialTheme.colorScheme.error
+                                )
+                            }
                         }
                     }
                 }
@@ -629,6 +668,7 @@ fun JournalScreen(
         }
     }
 
+    // Диалог просмотра устройств конкретного сканирования
     selectedScanId?.let { scanId ->
         AlertDialog(
             onDismissRequest = { selectedScanId = null },
@@ -637,7 +677,11 @@ fun JournalScreen(
                 if (scanDevices.isEmpty()) {
                     Text("В этом сканировании не было сохраненных устройств.")
                 } else {
-                    LazyColumn {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(200.dp)
+                    ) {
                         items(scanDevices) { device ->
                             Column(modifier = Modifier.padding(vertical = 4.dp)) {
                                 Text(
@@ -656,6 +700,59 @@ fun JournalScreen(
             confirmButton = {
                 Button(onClick = { selectedScanId = null }) {
                     Text("Закрыть")
+                }
+            }
+        )
+    }
+
+    // Диалог подтверждения удаления одного сканирования
+    scanToDelete?.let { scan ->
+        val formattedDate = remember(scan.startedAt) {
+            SimpleDateFormat("dd.MM.yyyy HH:mm", Locale("ru")).format(Date(scan.startedAt))
+        }
+        AlertDialog(
+            onDismissRequest = { scanToDelete = null },
+            title = { Text("Удалить сканирование") },
+            text = { Text("Удалить запись о сканировании от $formattedDate?") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        scan.id?.let { viewModel.deleteScan(it) }
+                        scanToDelete = null
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                ) {
+                    Text("Удалить")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { scanToDelete = null }) {
+                    Text("Отмена")
+                }
+            }
+        )
+    }
+
+    // Диалог подтверждения удаления всей истории
+    if (showDeleteAllDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteAllDialog = false },
+            title = { Text("Очистить всю историю?") },
+            text = { Text("Все сохраненные записи о сканированиях будут удалены.") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.deleteAllScans()
+                        showDeleteAllDialog = false
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                ) {
+                    Text("Удалить все")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteAllDialog = false }) {
+                    Text("Отмена")
                 }
             }
         )

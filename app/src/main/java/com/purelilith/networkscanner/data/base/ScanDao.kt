@@ -46,6 +46,18 @@ interface ScanDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertSightings(sightings: List<SightingEntity>)
 
+    @Query("DELETE FROM scans WHERE id = :scanId")
+    suspend fun deleteScan(scanId: Long)
+
+    @Query("DELETE FROM sightings WHERE scanId = :scanId")
+    suspend fun deleteSightingsForScan(scanId: Long)
+
+    @Query("DELETE FROM scans")
+    suspend fun deleteAllScans()
+
+    @Query("DELETE FROM sightings")
+    suspend fun deleteAllSightings()
+
     @Query("SELECT * FROM scans ORDER BY startedAt DESC")
     fun observeScans(): Flow<List<ScanEntity>>
 
