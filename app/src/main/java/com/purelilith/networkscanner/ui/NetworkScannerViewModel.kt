@@ -29,6 +29,9 @@ class NetworkScannerViewModel(application: Application) : AndroidViewModel(appli
     private val _lastScanTime = MutableStateFlow<Long?>(null)
     val lastScanTime: StateFlow<Long?> = _lastScanTime.asStateFlow()
 
+    private val _selectedScanDevices = MutableStateFlow<List<DeviceEntity>>(emptyList())
+    val selectedScanDevices: StateFlow<List<DeviceEntity>> = _selectedScanDevices.asStateFlow()
+
     val knownDevices: StateFlow<List<DeviceEntity>> = repository.observeDevices()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
@@ -68,6 +71,12 @@ class NetworkScannerViewModel(application: Application) : AndroidViewModel(appli
     fun updateCustomName(deviceKey: String, newName: String) {
         viewModelScope.launch {
             repository.updateCustomName(deviceKey, newName)
+        }
+    }
+
+    fun loadDevicesForScan(scanId: Long) {
+        viewModelScope.launch {
+            _selectedScanDevices.value = repository.getDevicesInScan(scanId)
         }
     }
 

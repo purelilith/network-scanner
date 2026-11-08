@@ -9,6 +9,7 @@ class ScanRepository(private val db: AppDatabase) {
 
     private val dao = db.scanDao()
 
+
     fun observeDevices(): Flow<List<DeviceEntity>> = dao.observeDevices()
 
     fun observeIgnoredDevices(): Flow<List<DeviceEntity>> = dao.observeIgnoredDevices()
@@ -22,6 +23,10 @@ class ScanRepository(private val db: AppDatabase) {
         db.withTransaction {
             dao.updateCustomName(deviceKey, newName)
         }
+    }
+
+    suspend fun getDevicesInScan(scanId: Long): List<DeviceEntity> {
+        return dao.getDevicesInScan(scanId)
     }
 
     suspend fun setIgnoredStatus(deviceKey: String, ignored: Boolean) {

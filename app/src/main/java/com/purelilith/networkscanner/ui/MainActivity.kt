@@ -473,6 +473,9 @@ fun JournalScreen(
     viewModel: NetworkScannerViewModel = viewModel()
 ) {
     val history by viewModel.scanHistory.collectAsState()
+    val scanDevices by viewModel.selectedScanDevices.collectAsState()
+
+    var selectedScanId by remember { mutableStateOf<Long?>(null) }
 
     Box(modifier = modifier.fillMaxSize()) {
         if (history.isEmpty()) {
@@ -489,16 +492,23 @@ fun JournalScreen(
                     )
                 }
                 items(history) { scan ->
+                    val formattedDate = remember(scan.startedAt) {
+                        val formatter = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale("ru"))
+                        formatter.format(Date(scan.startedAt))
+                    }
+
                     Card(
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp)
+                            .clickable {
+                                scan.id?.let { id ->
+                                    selectedScanId = id
+                                    viewModel.loadDevicesForScan(id)
+                                }
+                            }
                     ) {
                         Column(modifier = Modifier.padding(12.dp)) {
-                            // formatted date "13.08.2026 10:30"
-                            val formattedDate = remember(scan.startedAt) {
-                                val formatter = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale("ru"))
-                                formatter.format(Date(scan.startedAt))
-                            }
-
                             Text(
                                 text = formattedDate,
                                 style = MaterialTheme.typography.titleMedium
@@ -509,6 +519,38 @@ fun JournalScreen(
                 }
             }
         }
+    }
+
+    selectedScanId?.let { scanId ->
+        AlertDialog(
+            onDismissRequest = { selectedScanId = null },
+            title = { Text("Устройства в сканировании") },
+            text = {
+                if (scanDevices.isEmpty()) {
+                    Text("В этом сканировании не было сохраненных устройств.")
+                } else {
+                    LazyColumn {
+                        items(scanDevices) { device ->
+                            Column(modifier = Modifier.padding(vertical = 4.dp)) {
+                                Text(
+                                    text = device.customName.ifBlank { device.title },
+                                    style = MaterialTheme.typography.bodyLarge
+                                )
+                                Text(
+                                    text = "IP: ${device.lastIp ?: "—"}",
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                Button(onClick = { selectedScanId = null }) {
+                    Text("Закрыть")
+                }
+            }
+        )
     }
 }
 
