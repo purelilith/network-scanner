@@ -38,10 +38,13 @@ android {
 
 dependencies {
     implementation("androidx.compose.material:material-icons-extended")
+    implementation(libs.androidx.benchmark.traceprocessor)
+    implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.compose.foundation.layout)
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
     implementation(libs.androidx.ui)
+    implementation(libs.androidx.ui.graphics)
     ksp(libs.androidx.room.compiler)
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
     implementation(platform(libs.androidx.compose.bom))
