@@ -9,7 +9,10 @@ import androidx.compose.ui.unit.sp
 import com.purelilith.networkscanner.R
 
 val GeologicaFontFamily = FontFamily(
-    Font(R.font.geologica, FontWeight.Normal)
+    Font(R.font.geologica, FontWeight.Normal),
+    Font(R.font.geologica, FontWeight.Medium),
+    Font(R.font.geologica, FontWeight.SemiBold),
+    Font(R.font.geologica, FontWeight.Bold)
 )
 
 val Typography = Typography(

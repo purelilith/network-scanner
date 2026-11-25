@@ -5,15 +5,14 @@ import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
+private val sameYearFormat by lazy { SimpleDateFormat("d MMMM, HH:mm", Locale("ru")) }
+private val otherYearFormat by lazy { SimpleDateFormat("d MMMM yyyy, HH:mm", Locale("ru")) }
+
 fun formatDateTime(timestamp: Long): String {
-    val now = Calendar.getInstance()
-    val then = Calendar.getInstance().apply { timeInMillis = timestamp }
-    val pattern = if (now.get(Calendar.YEAR) == then.get(Calendar.YEAR)) {
-        "d MMMM, HH:mm"
-    } else {
-        "d MMMM yyyy, HH:mm"
-    }
-    return SimpleDateFormat(pattern, Locale("ru")).format(Date(timestamp))
+    val currentYear = Calendar.getInstance().get(Calendar.YEAR)
+    val timestampYear = Calendar.getInstance().apply { timeInMillis = timestamp }.get(Calendar.YEAR)
+    val format = if (currentYear == timestampYear) sameYearFormat else otherYearFormat
+    return format.format(Date(timestamp))
 }
 
 fun devicesCountText(count: Int): String {

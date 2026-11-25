@@ -1,7 +1,7 @@
 package com.purelilith.networkscanner.ui
 
 import androidx.activity.compose.BackHandler
-import androidx.benchmark.traceprocessor.Row
+import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -44,6 +44,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -83,6 +84,7 @@ fun AppRoot() {
     Box(
         modifier = Modifier
             .fillMaxSize()
+            .background(appBackgroundBrush())
     ) {
         Scaffold(
             containerColor = Color.Transparent,
@@ -90,22 +92,37 @@ fun AppRoot() {
         ) { innerPadding ->
             val contentModifier = Modifier.padding(
                 top = innerPadding.calculateTopPadding(),
-                bottom = 120.dp
+                bottom = 140.dp
             )
 
-            when (currentScreen) {
-                Screen.Scanner -> ScannerScreen(viewModel = viewModel, modifier = contentModifier)
-                Screen.Devices -> DevicesScreen(
-                    viewModel = viewModel,
-                    onOpenBlacklist = { currentScreen = Screen.Blacklist },
-                    modifier = contentModifier
-                )
-                Screen.Journal -> JournalScreen(viewModel = viewModel, modifier = contentModifier)
-                Screen.Blacklist -> BlacklistScreen(
-                    viewModel = viewModel,
-                    onBack = { currentScreen = Screen.Devices },
-                    modifier = contentModifier
-                )
+            Crossfade(
+                targetState = currentScreen,
+                animationSpec = tween(durationMillis = 100),
+                label = "screenTransition"
+            ) { screen ->
+                when (screen) {
+                    Screen.Scanner -> ScannerScreen(
+                        viewModel = viewModel,
+                        modifier = contentModifier
+                    )
+
+                    Screen.Devices -> DevicesScreen(
+                        viewModel = viewModel,
+                        onOpenBlacklist = { currentScreen = Screen.Blacklist },
+                        modifier = contentModifier
+                    )
+
+                    Screen.Journal -> JournalScreen(
+                        viewModel = viewModel,
+                        modifier = contentModifier
+                    )
+
+                    Screen.Blacklist -> BlacklistScreen(
+                        viewModel = viewModel,
+                        onBack = { currentScreen = Screen.Devices },
+                        modifier = contentModifier
+                    )
+                }
             }
         }
 
@@ -123,25 +140,18 @@ fun AppRoot() {
                 Color.White.copy(alpha = 0.12f)
             }
 
-            Row(
+            NavigationBar(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(64.dp)
-                    .shadow(
-                        elevation = 8.dp,
-                        shape = panelShape,
-                        clip = false
-                    )
-                    .background(
-                        color = MaterialTheme.colorScheme.surfaceContainerLow,
-                        shape = panelShape
-                    )
+                    .clip(panelShape)
                     .border(
                         width = 1.dp,
                         color = strokeColor,
                         shape = panelShape
                     ),
-                verticalAlignment = Alignment.CenterVertically
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                tonalElevation = 6.dp
             ) {
                 navItems.forEachIndexed { index, item ->
                     val selected = currentScreen == item.screen ||
@@ -169,10 +179,12 @@ fun AppRoot() {
                                 shape = segmentShape
                             )
                             .clickable(
-                                interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                                interactionSource = remember { MutableInteractionSource() },
                                 indication = null
                             ) {
-                                currentScreen = item.screen
+                                if (currentScreen != item.screen) {
+                                    currentScreen = item.screen
+                                }
                             },
                         contentAlignment = Alignment.Center
                     ) {

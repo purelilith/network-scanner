@@ -1,20 +1,18 @@
 package com.purelilith.networkscanner.ui.screens
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
@@ -41,7 +39,7 @@ import com.purelilith.networkscanner.ui.components.SectionTitle
 import com.purelilith.networkscanner.ui.components.formatDateTime
 import com.purelilith.networkscanner.ui.components.icon
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DeviceDetailsSheet(
     device: DeviceEntity,
@@ -57,7 +55,12 @@ fun DeviceDetailsSheet(
     }
     val seenTimes by seenTimesFlow.collectAsState(initial = emptyList())
 
+    val seenTexts = remember(seenTimes) { seenTimes.take(8).map { formatDateTime(it) } }
+    val firstSeenText = remember(device.firstSeen) { formatDateTime(device.firstSeen) }
+    val lastSeenText = remember(device.lastSeen) { formatDateTime(device.lastSeen) }
+
     var nameInput by remember(device.deviceKey) { mutableStateOf(device.customName) }
+    var typeMenuOpen by remember { mutableStateOf(false) }
 
     val currentType = DeviceType.fromName(device.deviceType)
     val nameSourceLabel = NameSource.entries
@@ -116,23 +119,27 @@ fun DeviceDetailsSheet(
 
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 SectionTitle("Тип устройства")
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    DeviceType.entries.forEach { type ->
-                        FilterChip(
-                            selected = currentType == type,
-                            onClick = { viewModel.updateDeviceType(device.deviceKey, type.name) },
-                            label = { Text(type.label) },
-                            leadingIcon = {
-                                Icon(
-                                    imageVector = type.icon(),
-                                    contentDescription = null,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                            }
-                        )
+                Box {
+                    AppButton(
+                        text = currentType.label,
+                        onClick = { typeMenuOpen = true },
+                        icon = currentType.icon(),
+                        kind = ButtonKind.Tonal,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    DropdownMenu(
+                        expanded = typeMenuOpen,
+                        onDismissRequest = { typeMenuOpen = false }
+                    ) {
+                        DeviceType.entries.forEach { type ->
+                            DropdownMenuItem(
+                                text = { Text(type.label) },
+                                onClick = {
+                                    viewModel.updateDeviceType(device.deviceKey, type.name)
+                                    typeMenuOpen = false
+                                }
+                            )
+                        }
                     }
                 }
                 if (device.typeIsGuess && currentType != DeviceType.UNKNOWN) {
@@ -148,29 +155,29 @@ fun DeviceDetailsSheet(
                 SectionTitle("Сведения")
                 InfoLine("Имя хоста", device.hostname ?: "—")
                 InfoLine("Название определено", nameSourceLabel)
-                InfoLine("Впервые в сети", formatDateTime(device.firstSeen))
-                InfoLine("Последний раз", formatDateTime(device.lastSeen))
+                InfoLine("Впервые в сети", firstSeenText)
+                InfoLine("Последний раз", lastSeenText)
             }
 
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 SectionTitle("Когда видели")
-                if (seenTimes.isEmpty()) {
+                if (seenTexts.isEmpty()) {
                     Text(
                         text = "В сохранённых сканированиях этого устройства нет.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 } else {
-                    seenTimes.take(8).forEach { timestamp ->
+                    seenTexts.forEach { text ->
                         Text(
-                            text = formatDateTime(timestamp),
+                            text = text,
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                     }
                     if (seenTimes.size > 8) {
                         Text(
-                            text = "и ещё ${seenTimes.size - 8}",
+                            text = "и другие",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

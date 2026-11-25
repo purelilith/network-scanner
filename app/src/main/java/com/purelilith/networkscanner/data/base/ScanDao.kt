@@ -64,6 +64,6 @@ interface ScanDao {
     @Query("SELECT d.* FROM devices d JOIN sightings s ON s.deviceKey = d.deviceKey WHERE s.scanId = :scanId")
     suspend fun getDevicesInScan(scanId: Long): List<DeviceEntity>
 
-    @Query("SELECT sc.startedAt FROM scans sc JOIN sightings s ON s.scanId = sc.id WHERE s.deviceKey = :key ORDER BY sc.startedAt DESC")
+    @Query("SELECT sc.startedAt FROM scans sc JOIN sightings s ON s.scanId = sc.id WHERE s.deviceKey = :key ORDER BY sc.startedAt DESC LIMIT 9")
     fun observeSeenTimes(key: String): Flow<List<Long>>
 }

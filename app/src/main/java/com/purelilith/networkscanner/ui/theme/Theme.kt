@@ -7,10 +7,13 @@ import androidx.compose.material3.Shapes
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
+val LocalIsDarkTheme = staticCompositionLocalOf { false }
 private val LightColorScheme = lightColorScheme(
     primary = Sea,
     onPrimary = Color.White,
@@ -84,14 +87,16 @@ val AppShapes = Shapes(
 )
 
 @Composable
-fun appBackgroundBrush(darkTheme: Boolean = isSystemInDarkTheme()): Brush {
-    val top = if (darkTheme) NightTop else MistTop
-    val base = if (darkTheme) Night else Mist
-    return Brush.verticalGradient(
-        0f to top,
-        0.5f to base,
-        1f to base
-    )
+fun appBackgroundBrush(darkTheme: Boolean = LocalIsDarkTheme.current): Brush {
+    return remember(darkTheme) {
+        val top = if (darkTheme) NightTop else MistTop
+        val base = if (darkTheme) Night else Mist
+        Brush.verticalGradient(
+            0f to top,
+            0.5f to base,
+            1f to base
+        )
+    }
 }
 
 @Composable
