@@ -4,7 +4,10 @@ import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "devices")
+@Entity(
+    tableName = "devices",
+    indices = [Index(value = ["isIgnored", "lastSeen"])]
+)
 data class DeviceEntity(
     @PrimaryKey val deviceKey: String,
     val lastIp: String?,
@@ -19,9 +22,12 @@ data class DeviceEntity(
     val lastSeen: Long
 )
 
-@Entity(tableName = "scans")
+@Entity(
+    tableName = "scans",
+    indices = [Index(value = ["startedAt"])]
+)
 data class ScanEntity(
-    @PrimaryKey (autoGenerate = true) val id: Long? = null,
+    @PrimaryKey(autoGenerate = true) val id: Long? = null,
     val startedAt: Long,
     val deviceCount: Int,
 )
@@ -29,7 +35,7 @@ data class ScanEntity(
 @Entity(
     tableName = "sightings",
     primaryKeys = ["scanId", "deviceKey"],
-    indices =[Index("deviceKey")]
+    indices = [Index("deviceKey")]
 )
 data class SightingEntity(
     val scanId: Long,

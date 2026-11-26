@@ -2,7 +2,6 @@ package com.purelilith.networkscanner.data.base
 
 import androidx.room.withTransaction
 import com.purelilith.networkscanner.data.scanner.DeviceInfo
-import com.purelilith.networkscanner.data.scanner.DeviceType
 import kotlinx.coroutines.flow.Flow
 
 class ScanRepository(private val db: AppDatabase) {
@@ -11,42 +10,32 @@ class ScanRepository(private val db: AppDatabase) {
 
     fun observeDevices(): Flow<List<DeviceEntity>> = dao.observeDevices()
 
-    fun getSeenTimes(key: String): Flow<List<Long>> {
-        return dao.observeSeenTimes(key)
-    }
-
-    suspend fun updateDeviceType(deviceKey: String, newType: String) {
-        db.withTransaction {
-            dao.updateDeviceType(deviceKey, newType)
-        }
-    }
-
     fun observeIgnoredDevices(): Flow<List<DeviceEntity>> = dao.observeIgnoredDevices()
 
     fun observeScans(): Flow<List<ScanEntity>> = dao.observeScans()
 
+    fun getSeenTimes(key: String): Flow<List<Long>> = dao.observeSeenTimes(key)
+
     internal fun deviceKey(device: DeviceInfo): String =
         device.hostname?.lowercase()?.let { "h:$it" } ?: "ip:${device.ip}"
 
-    suspend fun updateCustomName(deviceKey: String, newName: String) {
-        db.withTransaction {
-            dao.updateCustomName(deviceKey, newName)
-        }
+    suspend fun updateDeviceType(deviceKey: String, newType: String) {
+        dao.updateDeviceType(deviceKey, newType)
     }
 
-    suspend fun getDevicesInScan(scanId: Long): List<DeviceEntity> {
-        return dao.getDevicesInScan(scanId)
+    suspend fun updateCustomName(deviceKey: String, newName: String) {
+        dao.updateCustomName(deviceKey, newName)
     }
+
+    suspend fun getDevicesInScan(scanId: Long): List<DeviceEntity> =
+        dao.getDevicesInScan(scanId)
 
     suspend fun setIgnoredStatus(deviceKey: String, ignored: Boolean) {
-        db.withTransaction {
-            dao.updateIgnoredStatus(deviceKey, ignored)
-        }
+        dao.updateIgnoredStatus(deviceKey, ignored)
     }
 
-    suspend fun getIgnoredKeys(): Set<String> {
-        return dao.getIgnoredDeviceKeys().toSet()
-    }
+    suspend fun getIgnoredKeys(): Set<String> =
+        dao.getIgnoredDeviceKeys().toSet()
 
     suspend fun deleteScan(scanId: Long) {
         db.withTransaction {
@@ -63,25 +52,21 @@ class ScanRepository(private val db: AppDatabase) {
     }
 
     suspend fun deleteDevice(deviceKey: String) {
-        db.withTransaction {
-            dao.deleteDevice(deviceKey)
-        }
+        dao.deleteDevice(deviceKey)
     }
 
     suspend fun deleteAllDevices() {
-        db.withTransaction {
-            dao.deleteAllDevices()
-        }
+        dao.deleteAllDevices()
     }
 
-    suspend fun saveScan(devices: List<DeviceInfo>, startedAt: Long, finishedAt: Long) {
+    suspend fun saveScan(
+        activeDevices: List<DeviceInfo>,
+        startedAt: Long,
+        finishedAt: Long
+    ) {
+        if (activeDevices.isEmpty()) return
+
         db.withTransaction {
-            val ignoredKeys = dao.getIgnoredDeviceKeys().toSet()
-
-            val activeDevices = devices.filter { device ->
-                ignoredKeys.contains(deviceKey(device)) == false
-            }
-
             val byKey = activeDevices.associateBy { deviceKey(it) }
 
             val scanId = dao.insertScan(
@@ -96,18 +81,7 @@ class ScanRepository(private val db: AppDatabase) {
 
             val entities = byKey.map { (key, device) ->
                 val old = existing[key]
-
-                val finalType = if (old != null && !old.typeIsGuess) {
-                    old.deviceType
-                } else {
-                    device.type.name
-                }
-
-                val finalTypeIsGuess = if (old != null && !old.typeIsGuess) {
-                    false
-                } else {
-                    device.typeIsGuess
-                }
+                val keepOldType = old != null && !old.typeIsGuess
 
                 DeviceEntity(
                     deviceKey = key,
@@ -115,8 +89,8 @@ class ScanRepository(private val db: AppDatabase) {
                     hostname = device.hostname,
                     title = device.name.title,
                     nameSource = device.name.source.name,
-                    deviceType = finalType,
-                    typeIsGuess = finalTypeIsGuess,
+                    deviceType = if (keepOldType) old.deviceType else device.type.name,
+                    typeIsGuess = if (keepOldType) false else device.typeIsGuess,
                     customName = old?.customName ?: "",
                     isIgnored = false,
                     firstSeen = old?.firstSeen ?: finishedAt,
@@ -124,10 +98,8 @@ class ScanRepository(private val db: AppDatabase) {
                 )
             }
 
-            if (entities.isNotEmpty()) {
-                dao.upsertDevices(entities)
-                dao.insertSightings(entities.map { SightingEntity(scanId, it.deviceKey) })
-            }
+            dao.upsertDevices(entities)
+            dao.insertSightings(entities.map { SightingEntity(scanId, it.deviceKey) })
         }
     }
 }

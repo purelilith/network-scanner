@@ -7,23 +7,28 @@ import androidx.room.RoomDatabase
 
 @Database(
     entities = [DeviceEntity::class, ScanEntity::class, SightingEntity::class],
-    version = 1,
+    version = 2,
     exportSchema = false,
 )
-
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun scanDao(): ScanDao
+
     companion object {
+        @Volatile
         private var instance: AppDatabase? = null
 
-        @Synchronized
         fun get(context: Context): AppDatabase {
-            return instance ?: Room.databaseBuilder(
-                context.applicationContext,
-                AppDatabase::class.java,
-                "scanner.db"
-            ).build().also { instance = it }
+            return instance ?: synchronized(this) {
+                instance ?: Room.databaseBuilder(
+                    context.applicationContext,
+                    AppDatabase::class.java,
+                    "scanner.db"
+                )
+                    .fallbackToDestructiveMigration(dropAllTables = true)
+                    .build()
+                    .also { instance = it }
+            }
         }
     }
 }

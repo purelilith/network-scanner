@@ -3,20 +3,23 @@ package com.purelilith.networkscanner.ui
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
 import com.purelilith.networkscanner.data.base.AppDatabase
 import com.purelilith.networkscanner.data.base.DeviceEntity
 import com.purelilith.networkscanner.data.base.ScanEntity
 import com.purelilith.networkscanner.data.base.ScanRepository
 import com.purelilith.networkscanner.data.scanner.DeviceInfo
 import com.purelilith.networkscanner.data.scanner.NetworkScanner
-import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class NetworkScannerViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repository = ScanRepository(AppDatabase.get(application))
@@ -33,6 +36,14 @@ class NetworkScannerViewModel(application: Application) : AndroidViewModel(appli
     private val _selectedScanDevices = MutableStateFlow<List<DeviceEntity>>(emptyList())
     val selectedScanDevices: StateFlow<List<DeviceEntity>> = _selectedScanDevices.asStateFlow()
 
+    private val selectedDetailsDeviceKey = MutableStateFlow<String?>(null)
+
+    val selectedDeviceSeenTimes: StateFlow<List<Long>> = selectedDetailsDeviceKey
+        .flatMapLatest { key ->
+            if (key == null) flowOf(emptyList()) else repository.getSeenTimes(key)
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
     val knownDevices: StateFlow<List<DeviceEntity>> = repository.observeDevices()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
@@ -43,6 +54,7 @@ class NetworkScannerViewModel(application: Application) : AndroidViewModel(appli
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     fun startScan() {
+        if (_isScanning.value) return
         viewModelScope.launch {
             _isScanning.value = true
             try {
@@ -54,7 +66,7 @@ class NetworkScannerViewModel(application: Application) : AndroidViewModel(appli
 
                 val cleanedFound = found.filter { device ->
                     val key = repository.deviceKey(device)
-                    !ignoredKeys.contains(key) && !ignoredKeys.contains("ip:${device.ip}")
+                    key !in ignoredKeys && "ip:${device.ip}" !in ignoredKeys
                 }
 
                 _devices.value = cleanedFound
@@ -67,6 +79,10 @@ class NetworkScannerViewModel(application: Application) : AndroidViewModel(appli
                 _isScanning.value = false
             }
         }
+    }
+
+    fun selectDeviceForDetails(deviceKey: String?) {
+        selectedDetailsDeviceKey.value = deviceKey
     }
 
     fun updateCustomName(deviceKey: String, newName: String) {
@@ -99,10 +115,6 @@ class NetworkScannerViewModel(application: Application) : AndroidViewModel(appli
         }
     }
 
-    fun observeDeviceSeenTimes(deviceKey: String): Flow<List<Long>> {
-        return repository.getSeenTimes(deviceKey)
-    }
-
     fun setDeviceIgnored(deviceKey: String, ignored: Boolean) {
         viewModelScope.launch {
             repository.setIgnoredStatus(deviceKey, ignored)
@@ -120,7 +132,6 @@ class NetworkScannerViewModel(application: Application) : AndroidViewModel(appli
             repository.deleteAllDevices()
         }
     }
-
 }
 
 fun formatLastScanTime(lastTime: Long?): String {

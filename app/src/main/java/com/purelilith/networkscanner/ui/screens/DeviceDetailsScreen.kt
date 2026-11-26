@@ -18,6 +18,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -48,11 +49,10 @@ fun DeviceDetailsScreen(
     onIgnore: (() -> Unit)? = null,
     onDelete: (() -> Unit)? = null
 ) {
-    val seenTimesFlow = remember(device.deviceKey) {
-        viewModel.observeDeviceSeenTimes(device.deviceKey)
+    LaunchedEffect(device.deviceKey) {
+        viewModel.selectDeviceForDetails(device.deviceKey)
     }
-    val seenTimes by seenTimesFlow.collectAsState(initial = emptyList())
-
+    val seenTimes by viewModel.selectedDeviceSeenTimes.collectAsState()
     val seenTexts = remember(seenTimes) { seenTimes.take(8).map { formatDateTime(it) } }
     val firstSeenText = remember(device.firstSeen) { formatDateTime(device.firstSeen) }
     val lastSeenText = remember(device.lastSeen) { formatDateTime(device.lastSeen) }
