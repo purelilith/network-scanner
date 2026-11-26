@@ -4,21 +4,21 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.scaleIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
-import com.purelilith.networkscanner.ui.theme.appBackgroundBrush
 
 @Composable
 fun Modifier.blockTouches(): Modifier {
@@ -47,20 +47,20 @@ fun <T : Any> rememberLastNonNull(value: T?): T? {
 fun DetailOverlay(
     visible: Boolean,
     modifier: Modifier = Modifier,
+    containerColor: Color = MaterialTheme.colorScheme.background,
     content: @Composable () -> Unit
 ) {
     AnimatedVisibility(
         visible = visible,
         modifier = modifier,
-        enter = slideInHorizontally(animationSpec = tween(300)) { it / 2 } +
-                fadeIn(animationSpec = tween(300)),
-        exit = slideOutHorizontally(animationSpec = tween(250)) { it / 2 } +
-                fadeOut(animationSpec = tween(200))
+        enter = fadeIn(animationSpec = tween(150)) +
+                scaleIn(initialScale = 0.97f, animationSpec = tween(150)),
+        exit = fadeOut(animationSpec = tween(120))
     ) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(appBackgroundBrush())
+                .background(containerColor)
                 .blockTouches()
         ) {
             content()

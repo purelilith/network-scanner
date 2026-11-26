@@ -2,12 +2,12 @@ package com.purelilith.networkscanner.ui
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.scaleIn
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -19,8 +19,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -36,7 +34,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -53,7 +50,6 @@ import com.purelilith.networkscanner.ui.screens.DevicesScreen
 import com.purelilith.networkscanner.ui.screens.JournalScreen
 import com.purelilith.networkscanner.ui.screens.ScannerScreen
 import com.purelilith.networkscanner.ui.theme.appBackgroundBrush
-import kotlinx.coroutines.launch
 
 private enum class Tab(val title: String, val icon: ImageVector) {
     Scanner("Сканер", Icons.Rounded.Wifi),
@@ -64,15 +60,14 @@ private enum class Tab(val title: String, val icon: ImageVector) {
 @Composable
 fun AppRoot() {
     val viewModel: NetworkScannerViewModel = viewModel()
-    val pagerState = rememberPagerState(pageCount = { Tab.entries.size })
-    val scope = rememberCoroutineScope()
+    var currentTab by remember { mutableStateOf(Tab.Scanner) }
     var showBlacklist by remember { mutableStateOf(false) }
 
     BackHandler(enabled = showBlacklist) {
         showBlacklist = false
     }
-    BackHandler(enabled = !showBlacklist && pagerState.currentPage != 0) {
-        scope.launch { pagerState.animateScrollToPage(0) }
+    BackHandler(enabled = !showBlacklist && currentTab != Tab.Scanner) {
+        currentTab = Tab.Scanner
     }
 
     Box(
@@ -84,20 +79,21 @@ fun AppRoot() {
             containerColor = Color.Transparent,
             bottomBar = {
                 FloatingTabBar(
-                    selectedIndex = pagerState.currentPage,
+                    selectedIndex = currentTab.ordinal,
                     onSelect = { index ->
                         showBlacklist = false
-                        scope.launch { pagerState.animateScrollToPage(index) }
+                        currentTab = Tab.entries[index]
                     }
                 )
             }
         ) { innerPadding ->
             Box(modifier = Modifier.padding(innerPadding)) {
-                HorizontalPager(
-                    state = pagerState,
-                    modifier = Modifier.fillMaxSize()
-                ) { page ->
-                    when (Tab.entries[page]) {
+                Crossfade(
+                    targetState = currentTab,
+                    animationSpec = tween(durationMillis = 140),
+                    label = "tabCrossfade"
+                ) { tab ->
+                    when (tab) {
                         Tab.Scanner -> ScannerScreen(viewModel = viewModel)
                         Tab.Devices -> DevicesScreen(
                             viewModel = viewModel,
@@ -109,17 +105,16 @@ fun AppRoot() {
 
                 AnimatedVisibility(
                     visible = showBlacklist,
-                    enter = slideInHorizontally(animationSpec = tween(300)) { it / 2 } +
-                            fadeIn(animationSpec = tween(300)),
-                    exit = slideOutHorizontally(animationSpec = tween(250)) { it / 2 } +
-                            fadeOut(animationSpec = tween(200))
+                    enter = fadeIn(animationSpec = tween(150)) +
+                            scaleIn(initialScale = 0.97f, animationSpec = tween(150)),
+                    exit = fadeOut(animationSpec = tween(120))
                 ) {
                     BlacklistScreen(
                         viewModel = viewModel,
                         onBack = { showBlacklist = false },
                         modifier = Modifier
                             .fillMaxSize()
-                            .background(appBackgroundBrush())
+                            .background(MaterialTheme.colorScheme.background)
                             .blockTouches()
                     )
                 }
@@ -140,7 +135,7 @@ private fun FloatingTabBar(
             .fillMaxWidth(),
         shape = RoundedCornerShape(28.dp),
         color = MaterialTheme.colorScheme.surfaceContainerLow,
-        shadowElevation = 14.dp,
+        tonalElevation = 4.dp,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
     ) {
         Row(
@@ -168,7 +163,7 @@ private fun TabItem(
 ) {
     val backgroundColor by animateColorAsState(
         targetValue = if (selected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent,
-        animationSpec = tween(durationMillis = 250),
+        animationSpec = tween(durationMillis = 160),
         label = "tabBackground"
     )
     val contentColor by animateColorAsState(
@@ -177,7 +172,7 @@ private fun TabItem(
         } else {
             MaterialTheme.colorScheme.onSurfaceVariant
         },
-        animationSpec = tween(durationMillis = 250),
+        animationSpec = tween(durationMillis = 160),
         label = "tabContent"
     )
 
