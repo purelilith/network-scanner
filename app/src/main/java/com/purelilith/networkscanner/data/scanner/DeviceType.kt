@@ -9,7 +9,7 @@ enum class DeviceType(val label: String) {
     TV("Телевизор / приставка"),
     SPEAKER("Колонка / медиаплеер"),
     SMART_HOME("Умный дом"),
-    SERVER("Сервер / мини-компьютер"),
+    SERVER("Сервер"),
     UNKNOWN("Неизвестно");
 
     companion object {
