@@ -1,5 +1,6 @@
 package com.purelilith.networkscanner.ui.screens
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -52,59 +53,64 @@ fun ScannerScreen(
     var selectedKey by remember { mutableStateOf<String?>(null) }
     val selectedDevice = knownDevices.firstOrNull { it.deviceKey == selectedKey }
 
-    PullToRefreshBox(
-        isRefreshing = isScanning,
-        onRefresh = { viewModel.startScan() },
-        modifier = modifier.fillMaxSize()
-    ) {
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            item {
-                ScannerHeader(
-                    count = visibleDevices.size,
-                    lastScanTime = lastScanTime,
-                    isScanning = isScanning,
-                    onScan = { viewModel.startScan() }
-                )
-            }
+    BackHandler(enabled = selectedDevice != null) {
+        selectedKey = null
+    }
 
-            if (lastScanTime != null && !isScanning && visibleDevices.isEmpty()) {
+    if (selectedDevice != null) {
+        DeviceDetailsScreen(
+            device = selectedDevice,
+            viewModel = viewModel,
+            onBack = { selectedKey = null },
+            modifier = modifier
+        )
+    } else {
+        PullToRefreshBox(
+            isRefreshing = isScanning,
+            onRefresh = { viewModel.startScan() },
+            modifier = modifier.fillMaxSize()
+        ) {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 24.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                 item {
-                    Text(
-                        text = "Устройства не найдены. Проверьте, что телефон подключён к Wi-Fi.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(vertical = 8.dp)
+                    ScannerHeader(
+                        count = visibleDevices.size,
+                        lastScanTime = lastScanTime,
+                        isScanning = isScanning,
+                        onScan = { viewModel.startScan() }
+                    )
+                }
+
+                if (lastScanTime != null && !isScanning && visibleDevices.isEmpty()) {
+                    item {
+                        Text(
+                            text = "Устройства не найдены. Проверьте, что телефон подключён к Wi-Fi.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(vertical = 8.dp)
+                        )
+                    }
+                }
+
+                items(visibleDevices, key = { it.ip }) { device ->
+                    val entity = knownByIp[device.ip]
+                    val title = entity?.customName?.takeIf { it.isNotBlank() } ?: device.name.title
+                    val type = if (entity != null) DeviceType.fromName(entity.deviceType) else device.type
+                    val typeIsGuess = if (entity != null) entity.typeIsGuess else device.typeIsGuess
+
+                    DeviceRow(
+                        title = title,
+                        type = type,
+                        isGuess = typeIsGuess && type != DeviceType.UNKNOWN,
+                        trailingText = device.ip,
+                        onClick = if (entity != null) ({ selectedKey = entity.deviceKey }) else null
                     )
                 }
             }
-
-            items(visibleDevices, key = { it.ip }) { device ->
-                val entity = knownByIp[device.ip]
-                val title = entity?.customName?.takeIf { it.isNotBlank() } ?: device.name.title
-                val type = if (entity != null) DeviceType.fromName(entity.deviceType) else device.type
-                val typeIsGuess = if (entity != null) entity.typeIsGuess else device.typeIsGuess
-
-                DeviceRow(
-                    title = title,
-                    type = type,
-                    isGuess = typeIsGuess && type != DeviceType.UNKNOWN,
-                    trailingText = device.ip,
-                    onClick = if (entity != null) ({ selectedKey = entity.deviceKey }) else null
-                )
-            }
         }
-    }
-
-    selectedDevice?.let { device ->
-        DeviceDetailsSheet(
-            device = device,
-            viewModel = viewModel,
-            onDismiss = { selectedKey = null }
-        )
     }
 }
 

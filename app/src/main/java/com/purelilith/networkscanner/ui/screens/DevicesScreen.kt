@@ -1,5 +1,6 @@
 package com.purelilith.networkscanner.ui.screens
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -44,69 +45,74 @@ fun DevicesScreen(
 
     val selectedDevice = knownDevices.firstOrNull { it.deviceKey == selectedKey }
 
-    Column(modifier = modifier.fillMaxSize()) {
-        ScreenHeader(
-            title = "Устройства",
-            subtitle = if (knownDevices.isEmpty()) null else "Сохранено: ${knownDevices.size}",
-            modifier = Modifier.padding(start = 20.dp, end = 8.dp, top = 16.dp, bottom = 12.dp),
-            actions = {
-                HeaderIconButton(
-                    icon = Icons.Rounded.Block,
-                    description = "Чёрный список",
-                    onClick = onOpenBlacklist
-                )
-                HeaderIconButton(
-                    icon = Icons.Rounded.DeleteSweep,
-                    description = "Удалить все устройства",
-                    onClick = { showDeleteAll = true },
-                    enabled = knownDevices.isNotEmpty()
-                )
-            }
-        )
-
-        if (knownDevices.isEmpty()) {
-            EmptyState(
-                icon = Icons.Rounded.Devices,
-                title = "Пока пусто",
-                text = "Устройства появятся здесь после первого сканирования.",
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-            )
-        } else {
-            LazyColumn(
-                modifier = Modifier.weight(1f),
-                contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 24.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(knownDevices, key = { it.deviceKey }) { device ->
-                    val type = DeviceType.fromName(device.deviceType)
-                    DeviceRow(
-                        title = device.customName.ifBlank { device.title },
-                        type = type,
-                        isGuess = device.typeIsGuess && type != DeviceType.UNKNOWN,
-                        trailingText = device.lastIp,
-                        onClick = { selectedKey = device.deviceKey }
-                    )
-                }
-            }
-        }
+    BackHandler(enabled = selectedDevice != null) {
+        selectedKey = null
     }
 
-    selectedDevice?.let { device ->
-        DeviceDetailsSheet(
-            device = device,
+    if (selectedDevice != null) {
+        DeviceDetailsScreen(
+            device = selectedDevice,
             viewModel = viewModel,
-            onDismiss = { selectedKey = null },
+            onBack = { selectedKey = null },
+            modifier = modifier,
             onIgnore = {
                 selectedKey = null
-                deviceToIgnore = device
+                deviceToIgnore = selectedDevice
             },
             onDelete = {
                 selectedKey = null
-                deviceToDelete = device
+                deviceToDelete = selectedDevice
             }
         )
+    } else {
+        Column(modifier = modifier.fillMaxSize()) {
+            ScreenHeader(
+                title = "Устройства",
+                subtitle = if (knownDevices.isEmpty()) null else "Сохранено: ${knownDevices.size}",
+                modifier = Modifier.padding(start = 20.dp, end = 8.dp, top = 16.dp, bottom = 12.dp),
+                actions = {
+                    HeaderIconButton(
+                        icon = Icons.Rounded.Block,
+                        description = "Чёрный список",
+                        onClick = onOpenBlacklist
+                    )
+                    HeaderIconButton(
+                        icon = Icons.Rounded.DeleteSweep,
+                        description = "Удалить все устройства",
+                        onClick = { showDeleteAll = true },
+                        enabled = knownDevices.isNotEmpty()
+                    )
+                }
+            )
+
+            if (knownDevices.isEmpty()) {
+                EmptyState(
+                    icon = Icons.Rounded.Devices,
+                    title = "Пока пусто",
+                    text = "Устройства появятся здесь после первого сканирования.",
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                )
+            } else {
+                LazyColumn(
+                    modifier = Modifier.weight(1f),
+                    contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 24.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(knownDevices, key = { it.deviceKey }) { device ->
+                        val type = DeviceType.fromName(device.deviceType)
+                        DeviceRow(
+                            title = device.customName.ifBlank { device.title },
+                            type = type,
+                            isGuess = device.typeIsGuess && type != DeviceType.UNKNOWN,
+                            trailingText = device.lastIp,
+                            onClick = { selectedKey = device.deviceKey }
+                        )
+                    }
+                }
+            }
+        }
     }
 
     deviceToIgnore?.let { device ->
