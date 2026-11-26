@@ -21,10 +21,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Devices
-import androidx.compose.material.icons.rounded.History
-import androidx.compose.material.icons.rounded.Wifi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -50,11 +46,14 @@ import com.purelilith.networkscanner.ui.screens.DevicesScreen
 import com.purelilith.networkscanner.ui.screens.JournalScreen
 import com.purelilith.networkscanner.ui.screens.ScannerScreen
 import com.purelilith.networkscanner.ui.theme.appBackgroundBrush
+import androidx.annotation.DrawableRes
+import androidx.compose.ui.res.painterResource
+import com.purelilith.networkscanner.R
 
-private enum class Tab(val title: String, val icon: ImageVector) {
-    Scanner("Сканер", Icons.Rounded.Wifi),
-    Devices("Устройства", Icons.Rounded.Devices),
-    Journal("Журнал", Icons.Rounded.History)
+private enum class Tab(val title: String, @DrawableRes val iconRes: Int) {
+    Scanner("Сканер", R.drawable.ic_tab_scanner),
+    Devices("Устройства", R.drawable.ic_tab_devices),
+    Journal("Журнал", R.drawable.ic_tab_journal)
 }
 
 @Composable
@@ -186,7 +185,7 @@ private fun TabItem(
         verticalArrangement = Arrangement.spacedBy(2.dp)
     ) {
         Icon(
-            imageVector = tab.icon,
+            painter = painterResource(tab.iconRes),
             contentDescription = null,
             tint = contentColor,
             modifier = Modifier.size(22.dp)

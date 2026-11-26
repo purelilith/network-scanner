@@ -10,10 +10,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Block
-import androidx.compose.material.icons.rounded.DeleteSweep
-import androidx.compose.material.icons.rounded.Devices
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -22,6 +18,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.purelilith.networkscanner.R
 import com.purelilith.networkscanner.data.base.DeviceEntity
 import com.purelilith.networkscanner.data.scanner.DeviceType
 import com.purelilith.networkscanner.ui.NetworkScannerViewModel
@@ -61,12 +58,12 @@ fun DevicesScreen(
                 modifier = Modifier.padding(start = 20.dp, end = 8.dp, top = 16.dp, bottom = 12.dp),
                 actions = {
                     HeaderIconButton(
-                        icon = Icons.Rounded.Block,
+                        iconRes = R.drawable.ic_act_block,
                         description = "Чёрный список",
                         onClick = onOpenBlacklist
                     )
                     HeaderIconButton(
-                        icon = Icons.Rounded.DeleteSweep,
+                        iconRes = R.drawable.ic_act_delete_sweep,
                         description = "Удалить все устройства",
                         onClick = { showDeleteAll = true },
                         enabled = knownDevices.isNotEmpty()
@@ -76,7 +73,7 @@ fun DevicesScreen(
 
             if (knownDevices.isEmpty()) {
                 EmptyState(
-                    icon = Icons.Rounded.Devices,
+                    iconRes = R.drawable.ic_dev_unknown,
                     title = "Пока пусто",
                     text = "Устройства появятся здесь после первого сканирования.",
                     modifier = Modifier

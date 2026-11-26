@@ -8,14 +8,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material.icons.rounded.Block
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.purelilith.networkscanner.R
 import com.purelilith.networkscanner.data.scanner.DeviceType
 import com.purelilith.networkscanner.ui.NetworkScannerViewModel
 import com.purelilith.networkscanner.ui.components.AppButton
@@ -40,7 +38,7 @@ fun BlacklistScreen(
             modifier = Modifier.padding(start = 8.dp, end = 20.dp, top = 16.dp, bottom = 12.dp),
             navigationIcon = {
                 HeaderIconButton(
-                    icon = Icons.AutoMirrored.Rounded.ArrowBack,
+                    iconRes = R.drawable.ic_act_back,
                     description = "Назад",
                     onClick = onBack
                 )
@@ -49,7 +47,7 @@ fun BlacklistScreen(
 
         if (ignoredDevices.isEmpty()) {
             EmptyState(
-                icon = Icons.Rounded.Block,
+                iconRes = R.drawable.ic_act_block,
                 title = "Список пуст",
                 text = "Скрытые устройства появятся здесь, и вы сможете вернуть их в любой момент.",
                 modifier = Modifier

@@ -10,10 +10,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material.icons.rounded.DeleteSweep
-import androidx.compose.material.icons.rounded.History
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -24,6 +20,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.purelilith.networkscanner.R
 import com.purelilith.networkscanner.data.base.DeviceEntity
 import com.purelilith.networkscanner.data.base.ScanEntity
 import com.purelilith.networkscanner.data.scanner.DeviceType
@@ -68,7 +65,7 @@ fun JournalScreen(
                 modifier = Modifier.padding(start = 20.dp, end = 8.dp, top = 16.dp, bottom = 12.dp),
                 actions = {
                     HeaderIconButton(
-                        icon = Icons.Rounded.DeleteSweep,
+                        iconRes = R.drawable.ic_act_delete_sweep,
                         description = "Очистить журнал",
                         onClick = { showDeleteAll = true },
                         enabled = history.isNotEmpty()
@@ -78,7 +75,7 @@ fun JournalScreen(
 
             if (history.isEmpty()) {
                 EmptyState(
-                    icon = Icons.Rounded.History,
+                    iconRes = R.drawable.ic_tab_journal,
                     title = "Журнал пуст",
                     text = "Здесь появится запись о каждом сканировании сети.",
                     modifier = Modifier
@@ -98,7 +95,7 @@ fun JournalScreen(
                                 scan.id?.let { viewModel.loadDevicesForScan(it) }
                             }
                         ) {
-                            IconBadge(icon = Icons.Rounded.History)
+                            IconBadge(iconRes = R.drawable.ic_tab_journal)
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
                                     text = formatDateTime(scan.startedAt),
@@ -174,7 +171,7 @@ private fun ScanDetailsScreen(
             modifier = Modifier.padding(start = 8.dp, end = 20.dp, top = 16.dp, bottom = 12.dp),
             navigationIcon = {
                 HeaderIconButton(
-                    icon = Icons.AutoMirrored.Rounded.ArrowBack,
+                    iconRes = R.drawable.ic_act_back,
                     description = "Назад",
                     onClick = onBack
                 )

@@ -11,8 +11,6 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
@@ -27,6 +25,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.purelilith.networkscanner.R
 import com.purelilith.networkscanner.data.base.DeviceEntity
 import com.purelilith.networkscanner.data.scanner.DeviceType
 import com.purelilith.networkscanner.data.scanner.NameSource
@@ -38,7 +37,7 @@ import com.purelilith.networkscanner.ui.components.InfoLine
 import com.purelilith.networkscanner.ui.components.ScreenHeader
 import com.purelilith.networkscanner.ui.components.SectionTitle
 import com.purelilith.networkscanner.ui.components.formatDateTime
-import com.purelilith.networkscanner.ui.components.icon
+import com.purelilith.networkscanner.ui.components.iconRes
 
 @Composable
 fun DeviceDetailsScreen(
@@ -72,7 +71,7 @@ fun DeviceDetailsScreen(
             modifier = Modifier.padding(start = 8.dp, end = 20.dp, top = 16.dp, bottom = 12.dp),
             navigationIcon = {
                 HeaderIconButton(
-                    icon = Icons.AutoMirrored.Rounded.ArrowBack,
+                    iconRes = R.drawable.ic_act_back,
                     description = "Назад",
                     onClick = onBack
                 )
@@ -111,7 +110,7 @@ fun DeviceDetailsScreen(
                     AppButton(
                         text = currentType.label,
                         onClick = { typeMenuOpen = true },
-                        icon = currentType.icon(),
+                        iconRes = currentType.iconRes(),
                         kind = ButtonKind.Tonal,
                         modifier = Modifier.fillMaxWidth()
                     )

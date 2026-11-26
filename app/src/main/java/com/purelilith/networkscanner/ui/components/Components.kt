@@ -1,6 +1,6 @@
 package com.purelilith.networkscanner.ui.components
 
-import android.widget.Space
+import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -17,17 +17,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Computer
-import androidx.compose.material.icons.rounded.DeviceUnknown
-import androidx.compose.material.icons.rounded.Dns
-import androidx.compose.material.icons.rounded.Home
-import androidx.compose.material.icons.rounded.Print
-import androidx.compose.material.icons.rounded.Router
-import androidx.compose.material.icons.rounded.Smartphone
-import androidx.compose.material.icons.rounded.Speaker
-import androidx.compose.material.icons.rounded.TabletAndroid
-import androidx.compose.material.icons.rounded.Tv
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -45,29 +34,31 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.purelilith.networkscanner.R
 import com.purelilith.networkscanner.data.scanner.DeviceType
 
-fun DeviceType.icon(): ImageVector = when (this) {
-    DeviceType.PHONE -> Icons.Rounded.Smartphone
-    DeviceType.TABLET -> Icons.Rounded.TabletAndroid
-    DeviceType.COMPUTER -> Icons.Rounded.Computer
-    DeviceType.PRINTER -> Icons.Rounded.Print
-    DeviceType.ROUTER -> Icons.Rounded.Router
-    DeviceType.TV -> Icons.Rounded.Tv
-    DeviceType.SPEAKER -> Icons.Rounded.Speaker
-    DeviceType.SMART_HOME -> Icons.Rounded.Home
-    DeviceType.SERVER -> Icons.Rounded.Dns
-    DeviceType.UNKNOWN -> Icons.Rounded.DeviceUnknown
+@DrawableRes
+fun DeviceType.iconRes(): Int = when (this) {
+    DeviceType.PHONE -> R.drawable.ic_dev_phone
+    DeviceType.TABLET -> R.drawable.ic_dev_tablet
+    DeviceType.COMPUTER -> R.drawable.ic_dev_computer
+    DeviceType.PRINTER -> R.drawable.ic_dev_printer
+    DeviceType.ROUTER -> R.drawable.ic_dev_router
+    DeviceType.TV -> R.drawable.ic_dev_tv
+    DeviceType.SPEAKER -> R.drawable.ic_dev_speaker
+    DeviceType.SMART_HOME -> R.drawable.ic_dev_smart_home
+    DeviceType.SERVER -> R.drawable.ic_dev_server
+    DeviceType.UNKNOWN -> R.drawable.ic_dev_unknown
 }
 
 @Composable
 fun IconBadge(
-    icon: ImageVector,
+    @DrawableRes iconRes: Int,
     modifier: Modifier = Modifier,
     size: Dp = 50.dp
 ) {
@@ -79,7 +70,7 @@ fun IconBadge(
         contentAlignment = Alignment.Center
     ) {
         Icon(
-            imageVector = icon,
+            painter = painterResource(iconRes),
             contentDescription = null,
             tint = MaterialTheme.colorScheme.onPrimaryContainer,
             modifier = Modifier.size(size / 2)
@@ -89,7 +80,7 @@ fun IconBadge(
 
 @Composable
 fun DeviceBadge(type: DeviceType, modifier: Modifier = Modifier) {
-    IconBadge(icon = type.icon(), modifier = modifier)
+    IconBadge(iconRes = type.iconRes(), modifier = modifier)
 }
 
 @Composable
@@ -217,14 +208,14 @@ fun ScreenHeader(
 
 @Composable
 fun HeaderIconButton(
-    icon: ImageVector,
+    @DrawableRes iconRes: Int,
     description: String,
     onClick: () -> Unit,
     enabled: Boolean = true
 ) {
     IconButton(onClick = onClick, enabled = enabled) {
         Icon(
-            imageVector = icon,
+            painter = painterResource(iconRes),
             contentDescription = description,
             tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = if (enabled) 1f else 0.38f)
         )
@@ -239,7 +230,7 @@ fun AppButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     kind: ButtonKind = ButtonKind.Primary,
-    icon: ImageVector? = null,
+    @DrawableRes iconRes: Int? = null,
     enabled: Boolean = true,
     loading: Boolean = false
 ) {
@@ -252,9 +243,9 @@ fun AppButton(
                 color = LocalContentColor.current
             )
             Spacer(modifier = Modifier.width(10.dp))
-        } else if (icon != null) {
+        } else if (iconRes != null) {
             Icon(
-                imageVector = icon,
+                painter = painterResource(iconRes),
                 contentDescription = null,
                 modifier = Modifier.size(18.dp)
             )
@@ -330,7 +321,7 @@ fun InfoLine(label: String, value: String, modifier: Modifier = Modifier) {
 
 @Composable
 fun EmptyState(
-    icon: ImageVector,
+    @DrawableRes iconRes: Int,
     title: String,
     text: String,
     modifier: Modifier = Modifier
@@ -340,7 +331,7 @@ fun EmptyState(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        IconBadge(icon = icon, size = 72.dp)
+        IconBadge(iconRes = iconRes, size = 72.dp)
         Spacer(modifier = Modifier.size(20.dp))
         Text(
             text = title,

@@ -12,8 +12,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -26,6 +24,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.purelilith.networkscanner.R
 import com.purelilith.networkscanner.data.scanner.DeviceType
 import com.purelilith.networkscanner.ui.NetworkScannerViewModel
 import com.purelilith.networkscanner.ui.components.AppButton
@@ -156,7 +155,7 @@ private fun ScannerHeader(
         AppButton(
             text = if (isScanning) "Сканирую…" else "Сканировать",
             onClick = onScan,
-            icon = Icons.Rounded.Refresh,
+            iconRes = R.drawable.ic_act_refresh,
             enabled = !isScanning,
             loading = isScanning,
             modifier = Modifier.fillMaxWidth()
