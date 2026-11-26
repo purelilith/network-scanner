@@ -31,7 +31,7 @@ object FriendlyName {
         val text = context.resources.openRawResource(R.raw.name_rules)
             .bufferedReader().use { it.readText() }
         val array = JSONArray(text)
-        rules = (0 until array.length()).map { i ->
+        rules = List(array.length()) { i ->
             val o = array.getJSONObject(i)
             Rule(
                 pattern = Regex(o.getString("match")),
@@ -43,6 +43,11 @@ object FriendlyName {
         }
     }
 
+    private fun findRule(hostname: String?): Rule? {
+        val host = hostname?.takeIf { it.isNotBlank() } ?: return null
+        val lower = host.substringBefore('.').lowercase()
+        return rules.firstOrNull { it.pattern.containsMatchIn(lower) }
+    }
 
     fun resolve(
         hostname: String?,
@@ -50,12 +55,15 @@ object FriendlyName {
         services: List<String>,
         portGuess: String?
     ): FriendlyDeviceName {
-        val host = hostname?.takeIf { it.isNotBlank() }
-
-        if (!mdnsName.isNullOrBlank())
+        if (!mdnsName.isNullOrBlank()) {
             return FriendlyDeviceName(mdnsName, null, NameSource.MDNS_TXT)
+        }
 
-        host?.let { matchRule(it) }?.let { return it }
+        val host = hostname?.takeIf { it.isNotBlank() }
+        val matchedRule = findRule(host)
+        if (host != null && matchedRule != null) {
+            return buildFriendlyNameFromRule(host, matchedRule)
+        }
 
         typeFromServices(services)?.let {
             return FriendlyDeviceName(it, null, NameSource.MDNS_SERVICE)
@@ -70,24 +78,31 @@ object FriendlyName {
         return FriendlyDeviceName("Неизвестное устройство", null, NameSource.UNKNOWN)
     }
 
-    private fun findRule(hostname: String): Rule? {
-        val lower = hostname.substringBefore('.').lowercase()
-        return rules.firstOrNull { it.pattern.containsMatchIn(lower) }
-    }
-
     fun resolveType(hostname: String?, services: List<String>, openPorts: List<Int>): TypeResult {
-        val host = hostname?.takeIf { it.isNotBlank() }
-
-        host?.let { findRule(it) }?.let { rule ->
-            val ruleType = rule.type
+        val matchedRule = findRule(hostname)
+        if (matchedRule != null) {
+            val ruleType = matchedRule.type
             if (ruleType != null && ruleType != DeviceType.UNKNOWN) {
-                return TypeResult(ruleType, rule.typeIsGuess)
+                return TypeResult(ruleType, matchedRule.typeIsGuess)
             }
         }
 
         deviceTypeFromServices(services)?.let { return it }
 
         return deviceTypeFromPorts(openPorts) ?: TypeResult(DeviceType.UNKNOWN, false)
+    }
+
+    private fun buildFriendlyNameFromRule(hostname: String, rule: Rule): FriendlyDeviceName {
+        val detail = if (rule.keepDetails) {
+            tokensOf(hostname)
+                .filterNot(::isRandomId)
+                .filterNot { rule.pattern.containsMatchIn(it.lowercase()) }
+                .joinToString(" ")
+                .ifBlank { null }
+        } else {
+            null
+        }
+        return FriendlyDeviceName(rule.title, detail, NameSource.HOSTNAME_RULE)
     }
 
     private fun deviceTypeFromServices(services: List<String>): TypeResult? = when {
@@ -109,23 +124,10 @@ object FriendlyName {
 
     private fun tokensOf(hostname: String): List<String> =
         hostname.substringBefore('.').split('-', '_', ' ').filter { it.isNotBlank() }
+
     private fun isRandomId(token: String): Boolean {
         val t = token.lowercase()
         return t.length >= 6 && t.all { it in '0'..'9' || it in 'a'..'f' } && t.any { it.isDigit() }
-    }
-
-    private fun matchRule(hostname: String): FriendlyDeviceName? {
-        val lower = hostname.substringBefore('.').lowercase()
-        val rule = rules.firstOrNull { it.pattern.containsMatchIn(lower) } ?: return null
-
-        val detail = if (rule.keepDetails)
-            tokensOf(hostname)
-                .filterNot(::isRandomId)
-                .filterNot { rule.pattern.containsMatchIn(it.lowercase()) }
-                .joinToString(" ").ifBlank { null }
-        else null
-
-        return FriendlyDeviceName(rule.title, detail, NameSource.HOSTNAME_RULE)
     }
 
     private fun typeFromServices(services: List<String>): String? = when {
