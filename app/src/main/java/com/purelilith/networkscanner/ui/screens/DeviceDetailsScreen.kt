@@ -1,25 +1,22 @@
 package com.purelilith.networkscanner.ui.screens
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material3.Icon
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -28,9 +25,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.purelilith.networkscanner.data.base.DeviceEntity
 import com.purelilith.networkscanner.data.scanner.DeviceType
@@ -64,7 +59,7 @@ fun DeviceDetailsScreen(
     val lastSeenText = remember(device.lastSeen) { formatDateTime(device.lastSeen) }
 
     var nameInput by remember(device.deviceKey) { mutableStateOf(device.customName) }
-    var typesExpanded by remember(device.deviceKey) { mutableStateOf(false) }
+    var typeMenuOpen by remember(device.deviceKey) { mutableStateOf(false) }
 
     val currentType = DeviceType.fromName(device.deviceType)
     val nameSourceLabel = NameSource.entries
@@ -112,23 +107,27 @@ fun DeviceDetailsScreen(
             }
 
             DetailsCard(title = "Тип устройства") {
-                AppButton(
-                    text = currentType.label,
-                    onClick = { typesExpanded = !typesExpanded },
-                    icon = currentType.icon(),
-                    kind = ButtonKind.Tonal,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                if (typesExpanded) {
-                    DeviceType.entries.forEach { type ->
-                        TypeOption(
-                            type = type,
-                            selected = type == currentType,
-                            onClick = {
-                                viewModel.updateDeviceType(device.deviceKey, type.name)
-                                typesExpanded = false
-                            }
-                        )
+                Box {
+                    AppButton(
+                        text = currentType.label,
+                        onClick = { typeMenuOpen = true },
+                        icon = currentType.icon(),
+                        kind = ButtonKind.Tonal,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    DropdownMenu(
+                        expanded = typeMenuOpen,
+                        onDismissRequest = { typeMenuOpen = false }
+                    ) {
+                        DeviceType.entries.forEach { type ->
+                            DropdownMenuItem(
+                                text = { Text(type.label) },
+                                onClick = {
+                                    viewModel.updateDeviceType(device.deviceKey, type.name)
+                                    typeMenuOpen = false
+                                }
+                            )
+                        }
                     }
                 }
                 if (device.typeIsGuess && currentType != DeviceType.UNKNOWN) {
@@ -213,35 +212,5 @@ private fun DetailsCard(
             SectionTitle(title)
             content()
         }
-    }
-}
-
-@Composable
-private fun TypeOption(
-    type: DeviceType,
-    selected: Boolean,
-    onClick: () -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .selectable(selected = selected, onClick = onClick, role = Role.RadioButton)
-            .padding(vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(
-            imageVector = type.icon(),
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(20.dp)
-        )
-        Spacer(modifier = Modifier.width(12.dp))
-        Text(
-            text = type.label,
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.weight(1f)
-        )
-        RadioButton(selected = selected, onClick = null)
     }
 }

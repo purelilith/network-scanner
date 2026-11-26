@@ -2,6 +2,7 @@ package com.purelilith.networkscanner.ui.screens
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -30,6 +31,7 @@ import com.purelilith.networkscanner.ui.NetworkScannerViewModel
 import com.purelilith.networkscanner.ui.components.AppButton
 import com.purelilith.networkscanner.ui.components.ButtonKind
 import com.purelilith.networkscanner.ui.components.ConfirmDialog
+import com.purelilith.networkscanner.ui.components.DetailOverlay
 import com.purelilith.networkscanner.ui.components.DeviceRow
 import com.purelilith.networkscanner.ui.components.EmptyState
 import com.purelilith.networkscanner.ui.components.HeaderIconButton
@@ -38,6 +40,7 @@ import com.purelilith.networkscanner.ui.components.ListCard
 import com.purelilith.networkscanner.ui.components.ScreenHeader
 import com.purelilith.networkscanner.ui.components.devicesCountText
 import com.purelilith.networkscanner.ui.components.formatDateTime
+import com.purelilith.networkscanner.ui.components.rememberLastNonNull
 
 @Composable
 fun JournalScreen(
@@ -51,25 +54,14 @@ fun JournalScreen(
     var scanToDelete by remember { mutableStateOf<ScanEntity?>(null) }
     var showDeleteAll by remember { mutableStateOf(false) }
 
+    val shownScan = rememberLastNonNull(selectedScan)
+
     BackHandler(enabled = selectedScan != null) {
         selectedScan = null
     }
 
-    val openedScan = selectedScan
-
-    if (openedScan != null) {
-        ScanDetailsScreen(
-            scan = openedScan,
-            devices = scanDevices,
-            onBack = { selectedScan = null },
-            onDelete = {
-                selectedScan = null
-                scanToDelete = openedScan
-            },
-            modifier = modifier
-        )
-    } else {
-        Column(modifier = modifier.fillMaxSize()) {
+    Box(modifier = modifier.fillMaxSize()) {
+        Column(modifier = Modifier.fillMaxSize()) {
             ScreenHeader(
                 title = "Журнал",
                 subtitle = if (history.isEmpty()) null else "Сканирований: ${history.size}",
@@ -124,6 +116,17 @@ fun JournalScreen(
                 }
             }
         }
+
+        DetailOverlay(visible = selectedScan != null) {
+            if (shownScan != null) {
+                ScanDetailsScreen(
+                    scan = shownScan,
+                    devices = scanDevices,
+                    onBack = { selectedScan = null },
+                    onDelete = { scanToDelete = shownScan }
+                )
+            }
+        }
     }
 
     scanToDelete?.let { scan ->
@@ -135,6 +138,7 @@ fun JournalScreen(
             onConfirm = {
                 scan.id?.let { viewModel.deleteScan(it) }
                 scanToDelete = null
+                selectedScan = null
             },
             onDismiss = { scanToDelete = null }
         )

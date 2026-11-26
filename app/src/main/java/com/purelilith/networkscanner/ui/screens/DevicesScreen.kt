@@ -2,6 +2,7 @@ package com.purelilith.networkscanner.ui.screens
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -25,10 +26,12 @@ import com.purelilith.networkscanner.data.base.DeviceEntity
 import com.purelilith.networkscanner.data.scanner.DeviceType
 import com.purelilith.networkscanner.ui.NetworkScannerViewModel
 import com.purelilith.networkscanner.ui.components.ConfirmDialog
+import com.purelilith.networkscanner.ui.components.DetailOverlay
 import com.purelilith.networkscanner.ui.components.DeviceRow
 import com.purelilith.networkscanner.ui.components.EmptyState
 import com.purelilith.networkscanner.ui.components.HeaderIconButton
 import com.purelilith.networkscanner.ui.components.ScreenHeader
+import com.purelilith.networkscanner.ui.components.rememberLastNonNull
 
 @Composable
 fun DevicesScreen(
@@ -44,28 +47,14 @@ fun DevicesScreen(
     var showDeleteAll by remember { mutableStateOf(false) }
 
     val selectedDevice = knownDevices.firstOrNull { it.deviceKey == selectedKey }
+    val shownDevice = rememberLastNonNull(selectedDevice)
 
     BackHandler(enabled = selectedDevice != null) {
         selectedKey = null
     }
 
-    if (selectedDevice != null) {
-        DeviceDetailsScreen(
-            device = selectedDevice,
-            viewModel = viewModel,
-            onBack = { selectedKey = null },
-            modifier = modifier,
-            onIgnore = {
-                selectedKey = null
-                deviceToIgnore = selectedDevice
-            },
-            onDelete = {
-                selectedKey = null
-                deviceToDelete = selectedDevice
-            }
-        )
-    } else {
-        Column(modifier = modifier.fillMaxSize()) {
+    Box(modifier = modifier.fillMaxSize()) {
+        Column(modifier = Modifier.fillMaxSize()) {
             ScreenHeader(
                 title = "Устройства",
                 subtitle = if (knownDevices.isEmpty()) null else "Сохранено: ${knownDevices.size}",
@@ -113,6 +102,18 @@ fun DevicesScreen(
                 }
             }
         }
+
+        DetailOverlay(visible = selectedDevice != null) {
+            if (shownDevice != null) {
+                DeviceDetailsScreen(
+                    device = shownDevice,
+                    viewModel = viewModel,
+                    onBack = { selectedKey = null },
+                    onIgnore = { deviceToIgnore = shownDevice },
+                    onDelete = { deviceToDelete = shownDevice }
+                )
+            }
+        }
     }
 
     deviceToIgnore?.let { device ->
@@ -123,6 +124,7 @@ fun DevicesScreen(
             onConfirm = {
                 viewModel.setDeviceIgnored(device.deviceKey, true)
                 deviceToIgnore = null
+                selectedKey = null
             },
             onDismiss = { deviceToIgnore = null }
         )
@@ -137,6 +139,7 @@ fun DevicesScreen(
             onConfirm = {
                 viewModel.deleteDevice(device.deviceKey)
                 deviceToDelete = null
+                selectedKey = null
             },
             onDismiss = { deviceToDelete = null }
         )

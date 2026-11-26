@@ -2,6 +2,7 @@ package com.purelilith.networkscanner.ui.screens
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
@@ -28,8 +29,10 @@ import androidx.compose.ui.unit.dp
 import com.purelilith.networkscanner.data.scanner.DeviceType
 import com.purelilith.networkscanner.ui.NetworkScannerViewModel
 import com.purelilith.networkscanner.ui.components.AppButton
+import com.purelilith.networkscanner.ui.components.DetailOverlay
 import com.purelilith.networkscanner.ui.components.DeviceRow
 import com.purelilith.networkscanner.ui.components.devicesCountText
+import com.purelilith.networkscanner.ui.components.rememberLastNonNull
 import com.purelilith.networkscanner.ui.formatLastScanTime
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -52,23 +55,17 @@ fun ScannerScreen(
 
     var selectedKey by remember { mutableStateOf<String?>(null) }
     val selectedDevice = knownDevices.firstOrNull { it.deviceKey == selectedKey }
+    val shownDevice = rememberLastNonNull(selectedDevice)
 
     BackHandler(enabled = selectedDevice != null) {
         selectedKey = null
     }
 
-    if (selectedDevice != null) {
-        DeviceDetailsScreen(
-            device = selectedDevice,
-            viewModel = viewModel,
-            onBack = { selectedKey = null },
-            modifier = modifier
-        )
-    } else {
+    Box(modifier = modifier.fillMaxSize()) {
         PullToRefreshBox(
             isRefreshing = isScanning,
             onRefresh = { viewModel.startScan() },
-            modifier = modifier.fillMaxSize()
+            modifier = Modifier.fillMaxSize()
         ) {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
@@ -109,6 +106,16 @@ fun ScannerScreen(
                         onClick = if (entity != null) ({ selectedKey = entity.deviceKey }) else null
                     )
                 }
+            }
+        }
+
+        DetailOverlay(visible = selectedDevice != null) {
+            if (shownDevice != null) {
+                DeviceDetailsScreen(
+                    device = shownDevice,
+                    viewModel = viewModel,
+                    onBack = { selectedKey = null }
+                )
             }
         }
     }
